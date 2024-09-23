@@ -1,0 +1,42 @@
+{% extends 'admin.html' %}
+
+{% block body %}
+  <div class="container">
+    <h2>Pending Seller Approvals</h2>
+
+    {% if pending_sellers %}
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background-color: #f2f2f2;">
+          <th style="border: 1px solid #ddd; padding: 8px;">Shop Name</th>
+          <th style="border: 1px solid #ddd; padding: 8px;">Username</th>
+          <th style="border: 1px solid #ddd; padding: 8px;">Email</th>
+          <th style="border: 1px solid #ddd; padding: 8px;">Location</th>
+          <th style="border: 1px solid #ddd; padding: 8px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for seller in pending_sellers %}
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">{{ seller.shop_name }}</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">{{ seller.username }}</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">{{ seller.email }}</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">{{ seller.location }}</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">
+            {% comment %} <a href="{% url 'seller_registration_details' seller.id %}"> {% endcomment %}
+              {% comment %} <button style="padding: 5px 10px; margin-right: 5px; background-color: #007bff; color: white; border: none; cursor: pointer;">Reject</button>
+            </a> {% endcomment %}
+            <form method="POST" action="{% url 'approve_seller' seller.id %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" style="padding: 5px 10px; background-color: #28a745; color: white; border: none; cursor: pointer;">Approve</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p>No pending sellers found.</p>
+    {% endif %}
+  </div>
+{% endblock %}
