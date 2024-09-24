@@ -175,6 +175,11 @@ def about_view(request):
 
 
 
+from django.contrib.auth.hashers import check_password
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from .models import Seller
+
 def seller_login(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -186,6 +191,11 @@ def seller_login(request):
             seller = Seller.objects.get(username=username, shop_name=shop_name)
         except Seller.DoesNotExist:
             messages.error(request, 'Invalid username, shop name, or password')
+            return redirect('slogin')
+
+        # Check if seller is approved
+        if not seller.approved:
+            messages.error(request, 'Your account is not approved yet. Please wait for admin approval.')
             return redirect('slogin')
 
         # Check the password
@@ -201,6 +211,8 @@ def seller_login(request):
             return redirect('slogin')
     
     return render(request, 'sellerlogin.html')
+
+
 
 def logout_view(request):
     logout(request)
