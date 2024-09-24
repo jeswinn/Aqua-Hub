@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from . views import *
@@ -38,7 +38,8 @@ urlpatterns = [
       path('removeseller/<int:seller_id>',remove_seller,name='removeseller'),
       path('add_product/',add_product, name='add_product'),
       path('about',about_view, name='about'),
-      path('sellerproduct/',seller_product, name='sellerproduct')
+      path('sellerproduct/',seller_product, name='sellerproduct'),
+      path('oauth/', include('social_django.urls', namespace='social')),
      
     
     

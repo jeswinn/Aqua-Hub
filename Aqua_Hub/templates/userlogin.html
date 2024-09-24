@@ -134,7 +134,7 @@
         <a href="{% url 'userreg' %}" class="register-link">New here? Register now</a>
         <a href="{% url 'forgotpassword' %}" class="forgot-password-link">Forgot Password?</a>
         <div class="separator"></div>
-        <a href="'google_login' " class="google-login-link">Login with Google</a>
+        <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-login-link">Login with Google</a>
     </div>
 </body>
 
