@@ -16,8 +16,8 @@ import re
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 
@@ -249,26 +249,8 @@ def remove_seller(request, seller_id):
 
     return render(request, 'approvedsellers.html')
 
-def forgot_password(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        try:
-            user = User.objects.get(email=email)
-            # Generate password reset token
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            # Send the reset email
-            reset_url = request.build_absolute_uri(f'/reset_password/{uid}/{token}/')
-            subject = 'Reset Your Password'
-            message = render_to_string('password_reset_email.html', {
-                'user': user,
-                'reset_url': reset_url,
-            })
-            send_mail(subject, message, 'aquahub837@gmail.com', [user.email], html_message=message)
-            return render(request, 'login.html', {"message": "Password reset link is sent"})
-        except User.DoesNotExist:
-            return render(request, 'forgotpassword.html', {'error': 'No user found with that email.'})
-    return render(request, 'forgotpassword.html')
+
+
 
 
 
@@ -325,4 +307,45 @@ def seller_product(request):
 
     return render(request, 'sellerproduct.html', {'products': products})
 
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            # Generate password reset token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            # Send the reset email
+            reset_url = request.build_absolute_uri(f'/reset_password/{uid}/{token}/')
+            subject = 'Reset Your Password'
+            message = render_to_string('password_reset_email.html', {
+                'user': user,
+                'reset_url': reset_url,
+            })
+            send_mail(subject, message, 'aquahub837@gmail.com', [user.email], html_message=message)
+            return render(request, 'userlogin.html', {"message": "Password reset link is sent"})
+        except User.DoesNotExist:
+            return render(request, 'forgotpassword.html', {'error': 'No user found with that email.'})
+    return render(request, 'forgotpassword.html')
+
+
+def reset_password(request, uidb64, token):
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        if password != confirm_password:
+            return render(request, 'resetpassword.html', {'error': 'Passwords do not match'})
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+            if default_token_generator.check_token(user, token):
+                # Update the user's password
+                user.set_password(password)
+                user.save()
+                logout(request)
+                return render(request, 'userlogin.html', {"message": "Reset complete, Login now"})
+        except User.DoesNotExist:
+            return render(request, 'resetpassword.html', {'error': 'Invalid link'})
+    return render(request, 'resetpassword.html')
 
