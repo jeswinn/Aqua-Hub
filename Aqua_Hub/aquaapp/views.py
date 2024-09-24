@@ -193,7 +193,7 @@ def seller_login(request):
             request.session['seller_username'] = seller.username
             request.session['seller_shop_name'] = seller.shop_name
 
-            return redirect('sellerdash')
+            return redirect('sellerproduct')
         else:
             messages.error(request, 'Invalid username, shop name, or password')
             return redirect('slogin')
@@ -300,6 +300,29 @@ def add_product(request):
         )
         product.save()
         messages.success(request, "Product added successfully!")
-        return redirect('sellerdash')
+        return redirect('sellerproduct')
 
     return render(request, 'add_product.html')
+
+
+
+
+
+
+def seller_product(request):
+    # Fetch the currently logged-in seller's ID from session
+    seller_id = request.session.get('seller_id')
+
+    if not seller_id:
+        messages.error(request, "You must be logged in as a seller.")
+        return redirect('sellerdash')  # Redirect to seller login
+
+    # Get the seller's details
+    seller = Seller.objects.get(id=seller_id)
+
+    # Fetch all products added by the seller
+    products = Product.objects.filter(seller=seller)
+
+    return render(request, 'sellerproduct.html', {'products': products})
+
+
