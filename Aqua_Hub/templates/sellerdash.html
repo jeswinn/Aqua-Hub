@@ -41,7 +41,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto py-0">
-                <a href="dashboard.html" class="nav-item nav-link">MY PRODUCTS</a>
+                {% comment %} <a href="{% url 'seller_products' %}" class="nav-item nav-link">MY PRODUCTS</a> {% endcomment %}
                 <a href="orders.html" class="nav-item nav-link">PROFILE</a>
                 <a href="orders.html" class="nav-item nav-link">ORDERS</a>
                 <a href="{% url 'logout' %}" class="nav-item nav-link">LOGOUT</a>

@@ -35,6 +35,7 @@ urlpatterns = [
     #   path('reset_password/<uidb64>/<token>/', reset_password, name='reset_password'),
       path('removeseller/<int:seller_id>',remove_seller,name='removeseller'),
       path('add_product/',add_product, name='add_product'),
+     
     
     
 ]

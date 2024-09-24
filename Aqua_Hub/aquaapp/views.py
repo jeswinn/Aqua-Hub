@@ -22,6 +22,7 @@ from django.contrib.auth.decorators import login_required
 
 
 
+
 # Create your views here.
 def index_view(request):
     return render(request, 'index.html')
@@ -264,27 +265,37 @@ def forgot_password(request):
 
 
 
+
+
+
 def add_product(request):
+    categories = ProductCategory.objects.all()  # Fetch all categories
+
     if request.method == 'POST':
         product_name = request.POST['product_name']
         category_id = request.POST['category']
         price = request.POST['price']
+        stock = request.POST['stock']
         description = request.POST['description']
         image = request.FILES.get('image')
 
+        # Get the category object
         category = ProductCategory.objects.get(id=category_id)
-        
+
+        # Create and save the new product, assigning the authenticated user as the seller
         product = Product(
-            seller=request.user, 
             product_name=product_name,
             category=category,
             price=price,
+            stock=stock,
             description=description,
-            image=image
+            image=image,
+            seller=request.user  # Assign the logged-in user
         )
         product.save()
-        
-        return redirect('sellerdash')  # Redirect to the product list after adding
-    else:
-        categories = ProductCategory.objects.all()
-        return render(request, 'add_product.html', {'categories': categories})
+
+        return redirect('dashboard')
+
+    return render(request, 'add_product.html', {'categories': categories})
+
+
