@@ -9,7 +9,7 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-image: url('{%static 'img/about.jpg' %}'); /* Updated background image */
+            background-image: url('{% static 'img/about.jpg' %}');
             background-size: cover;
             background-position: center;
             margin: 0;
@@ -22,18 +22,18 @@
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.05); /* Increased transparency */
+            background: rgba(255, 255, 255, 0.05);
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 350px; /* Narrow width */
-            height: 450px; /* Increased height */
+            max-width: 350px;
+            height: 450px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             text-align: center;
-            backdrop-filter: blur(15px); /* Stronger blur for the box */
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
@@ -97,6 +97,11 @@
             text-decoration-color: #00bc00;
             text-decoration: underline;
         }
+
+        .error-message {
+            color: red; /* Style for error messages */
+            margin: 10px 0;
+        }
     </style>
 </head>
 
@@ -104,7 +109,11 @@
     <div class="container">
         <h1>Aqua Hub Seller Login</h1>
         {% if messages %}
-            <div>{{ messages }}</div>
+            <div class="error-message">
+                {% for message in messages %}
+                    <div>{{ message }}</div>
+                {% endfor %}
+            </div>
         {% endif %}
         <form action="{% url 'slogin' %}" method="POST">
             {% csrf_token %}
@@ -122,7 +131,7 @@
             </div>
             <button type="submit" class="btn">Login</button>
         </form>
-        <a href="{% url "sellereg" %}" class="register-link">New here? Register as a Seller</a>
+        <a href="{% url 'sellereg' %}" class="register-link">New here? Register as a Seller</a>
     </div>
 </body>
 

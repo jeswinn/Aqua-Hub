@@ -103,13 +103,15 @@ def user_reg(request):
 
         # Create user
         try:
-            user = User.objects.create_user(
+            user = userreg.objects.create_user(
                 username=username,
                 email=email,
-                password=password
+                password=password,
+                phone_number=number,
+                address=address
             )
-            user.profile.phone_number = number
-            user.profile.address = address
+            # user.profile.phone_number = number
+            # user.profile.address = address
             user.save()
 
             messages.success(request, "Registration successful. You can now log in.")
