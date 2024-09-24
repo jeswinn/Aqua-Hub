@@ -19,6 +19,7 @@ from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
 
 
 
@@ -139,11 +140,11 @@ def seller_reg(request):
         contact_num = request.POST.get('contact_num')
         product_type = request.POST.get('product_type')
 
-        # user = User.objects.create(
-        #     username=username,
-        #     email=email,
-        #     password=make_password(password)
-        # )
+       # user = User.objects.create(
+        #username=username,
+        #email=email,
+        #password=make_password(password)
+         
 
         Seller.objects.create(
            
@@ -166,30 +167,37 @@ def user_home(request):
     return render(request, 'userhome.html')
 
 
+def about_view(request):
+    return render(request, 'about.html')
+
+
+
+
 def seller_login(request):
     if request.method == 'POST':
-        shop_name=request.POST['shop_name']
-        username=request.POST['username']
-        password=request.POST['password']
+        username = request.POST['username']
+        shop_name = request.POST['shop_name']
+        password = request.POST['password']
+
+        # Try to find the seller by both username and shop_name
         try:
-            seller=Seller.objects.get(username=username)
-            if check_password(password, seller.password):
-                if seller.shop_name==shop_name:
-                    if not seller.approved:
-                        messages.error(request, 'approval pending')
-                        return redirect('slogin')
-                    else:
-                        return redirect('sellerdash')
-                else:
-                    messages.error(request, 'Invalid shop name')
-                    return redirect('slogin')
-            else:
-                messages.error(request, 'Invalid password')
-                return redirect('slogin')
-        except:
-            messages.error(request, 'Invalid username')
+            seller = Seller.objects.get(username=username, shop_name=shop_name)
+        except Seller.DoesNotExist:
+            messages.error(request, 'Invalid username, shop name, or password')
             return redirect('slogin')
-        
+
+        # Check the password
+        if check_password(password, seller.password):  # Assuming password is hashed
+            # Set the seller session if authenticated
+            request.session['seller_id'] = seller.id
+            request.session['seller_username'] = seller.username
+            request.session['seller_shop_name'] = seller.shop_name
+
+            return redirect('sellerdash')
+        else:
+            messages.error(request, 'Invalid username, shop name, or password')
+            return redirect('slogin')
+    
     return render(request, 'sellerlogin.html')
 
 def logout_view(request):
@@ -264,38 +272,34 @@ def forgot_password(request):
 
 
 
-
-
-
-
 def add_product(request):
-    categories = ProductCategory.objects.all()  # Fetch all categories
-
     if request.method == 'POST':
-        product_name = request.POST['product_name']
-        category_id = request.POST['category']
-        price = request.POST['price']
-        stock = request.POST['stock']
-        description = request.POST['description']
+        # Fetch the currently logged-in seller by their username
+        seller_id = request.session.get('seller_id')
+
+        if not seller_id:
+            messages.error(request, "No Seller matches the given query.")
+            return redirect('sellerdash')  # or another appropriate page
+
+        # Get product details from the form (example: name, price, stock, etc.)
+        seller = Seller.objects.get(id=seller_id)
+        product_name = request.POST.get('product_name')
+        price = request.POST.get('price')
+        stock = request.POST.get('stock')
+        description = request.POST.get('description')  # Get description from form
         image = request.FILES.get('image')
 
-        # Get the category object
-        category = ProductCategory.objects.get(id=category_id)
-
-        # Create and save the new product, assigning the authenticated user as the seller
-        product = Product(
-            product_name=product_name,
-            category=category,
+        # Create a new product and associate it with the seller
+        product = Product.objects.create(
+            seller=seller, 
+            product_name=product_name, 
             price=price,
             stock=stock,
             description=description,
-            image=image,
-            seller=request.user  # Assign the logged-in user
+            image=image
         )
         product.save()
+        messages.success(request, "Product added successfully!")
+        return redirect('sellerdash')
 
-        return redirect('dashboard')
-
-    return render(request, 'add_product.html', {'categories': categories})
-
-
+    return render(request, 'add_product.html')
