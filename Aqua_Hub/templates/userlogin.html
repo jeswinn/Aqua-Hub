@@ -7,41 +7,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aqua Hub - Login</title>
 
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
     <style>
+        /* General styling for consistency */
         body {
             font-family: 'Arial', sans-serif;
-            background-image: url('{% static 'img/about.jpg' %}'); /* Background image */
+            background-image: url('{% static 'img/about.jpg' %}');
             background-size: cover;
             background-position: center;
-            margin: 0;
-            padding: 0;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #333;
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.05); /* Increased transparency */
+            background: rgba(255, 255, 255, 0.2);
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
             width: 100%;
-            max-width: 350px; /* Narrow width */
-            height: 500px; /* Increased height */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            max-width: 400px;
             text-align: center;
-            backdrop-filter: blur(15px); /* Stronger blur for the box */
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: transform 0.4s ease, box-shadow 0.3s ease;
+        }
+
+        .container:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
         }
 
         h1 {
-            margin-bottom: 30px;
-            font-size: 24px;
-            color: #007BFF;
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 28px;
         }
 
         .form-group {
@@ -50,64 +53,58 @@
         }
 
         .form-group label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: block;
+            color: #fff;
         }
 
         .form-group input {
             width: 100%;
             padding: 12px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 14px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
         .form-group input:focus {
-            border-color: #007BFF;
+            border-color: #00bc00;
             outline: none;
-            box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.5);
+            box-shadow: 0px 0px 12px rgba(0, 188, 0, 0.6);
         }
 
         .btn {
-            width: 100%;
-            padding: 12px;
             background-color: #2754e4;
             color: white;
-            border: none;
+            width: 100%;
+            padding: 12px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
 
         .btn:hover {
             background-color: #00bc00;
+            transform: translateY(-3px);
         }
 
         .register-link,
         .forgot-password-link,
         .google-login-link {
-            margin-top: 20px;
             display: block;
+            margin-top: 15px;
             color: #007BFF;
             text-decoration: none;
-            font-weight: bold;
         }
 
         .register-link:hover,
         .forgot-password-link:hover,
         .google-login-link:hover {
-            text-color: #12235;
-            text-decoration-color: #00bc00;
-            text-decoration: underline;
+            color: #00bc00;
         }
 
         .separator {
             margin: 20px 0;
             font-size: 14px;
-            color: #999;
+            color: #ddd;
         }
     </style>
 </head>
@@ -122,11 +119,11 @@
             {% csrf_token %}
             <div class="form-group">
                 <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
             </div>
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
             </div>
             <button type="submit" class="btn">Login</button>
         </form>
@@ -134,8 +131,10 @@
         <a href="{% url 'userreg' %}" class="register-link">New here? Register now</a>
         <a href="{% url 'forgotpassword' %}" class="forgot-password-link">Forgot Password?</a>
         <div class="separator"></div>
-        <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-login-link">Login with Google</a>
+        <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-login-link">Sign in with Google</a>
     </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
 </body>
 
 </html>

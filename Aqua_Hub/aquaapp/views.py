@@ -20,6 +20,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator
 
 
 
@@ -36,9 +37,11 @@ def login_view(request):
         if user is not None:
             login(request, user)
             if user.is_superuser:
+                request.session['master']=username
                 return redirect('approve')
-            return redirect('userhome')
+            return redirect('product_list')
         else:
+            request.session['user']=username
             return render(request,'userlogin.html',{
                 'message':"Invalid Username Or Password"
             })
@@ -132,6 +135,11 @@ def admin_view(request):
 # from django.contrib.auth.models import User
 # from .models import Seller
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.hashers import make_password
+from .models import Seller  # Import your Seller model
+from django.core.files.storage import FileSystemStorage  # To handle file uploads
+
 def seller_reg(request):
     if request.method == 'POST':
         shop_name = request.POST.get('shop_name')
@@ -142,31 +150,34 @@ def seller_reg(request):
         contact_num = request.POST.get('contact_num')
         product_type = request.POST.get('product_type')
 
-       # user = User.objects.create(
-        #username=username,
-        #email=email,
-        #password=make_password(password)
-         
+        # Handle file upload for the licensing document
+        if request.FILES.get('licensing_document'):
+            licensing_document = request.FILES['licensing_document']
+            fs = FileSystemStorage()
+            filename = fs.save(licensing_document.name, licensing_document)
+            licensing_document_url = fs.url(filename)  # Get the file's URL (optional)
 
-        Seller.objects.create(
-           
-            username=username,
-            shop_name=shop_name,
-            email=email,
-            password=make_password(password),
-            location=location,
-            contact_num=contact_num,
-            product_type=product_type,
-        )
+            # Create the Seller object with the uploaded file
+            Seller.objects.create(
+                username=username,
+                shop_name=shop_name,
+                email=email,
+                password=make_password(password),
+                location=location,
+                contact_num=contact_num,
+                product_type=product_type,
+                licensing_document=filename  # Save the file name to the licensing_document field
+            )
         
         return redirect('slogin')  # Replace with your success URL
 
     return render(request, 'sellereg.html')
 
+
  
  
 def user_home(request):
-    return render(request, 'userhome.html')
+    return render(request, 'products.html')
 
 
 def about_view(request):
@@ -215,6 +226,7 @@ def seller_login(request):
 
 
 def logout_view(request):
+    request.session.flush()
     logout(request)
     return redirect('index')
     
@@ -227,11 +239,14 @@ def seller_dash(request):
 
 
 def admin_approv(request):
+    if 'master' in request.session:
     # Fetch all sellers whose 'approved' field is False (i.e., pending approval)
-    pending_sellers = Seller.objects.filter(approved=False)
+        pending_sellers = Seller.objects.filter(approved=False)
 
-    # Render the 'adminapprov.html' template with the pending sellers data
-    return render(request, 'adminapprov.html', {'pending_sellers': pending_sellers})
+        # Render the 'adminapprov.html' template with the pending sellers data
+        return render(request, 'adminapprov.html', {'pending_sellers': pending_sellers})
+    else:
+        return redirect('login')
 
 def approve_seller(request, id):
     seller = get_object_or_404(Seller,pk=id)
@@ -269,16 +284,19 @@ def remove_seller(request, seller_id):
 
 
 def add_product(request):
+    seller_id = request.session.get('seller_id')
+    sellers = get_object_or_404(Seller,pk=seller_id)
+    print(sellers.product_type)
     if request.method == 'POST':
         # Fetch the currently logged-in seller by their username
-        seller_id = request.session.get('seller_id')
+        
 
         if not seller_id:
             messages.error(request, "No Seller matches the given query.")
             return redirect('sellerdash')  # or another appropriate page
 
         # Get product details from the form (example: name, price, stock, etc.)
-        seller = Seller.objects.get(id=seller_id)
+        # seller = Seller.objects.get(id=seller_id)
         product_name = request.POST.get('product_name')
         price = request.POST.get('price')
         stock = request.POST.get('stock')
@@ -287,7 +305,7 @@ def add_product(request):
 
         # Create a new product and associate it with the seller
         product = Product.objects.create(
-            seller=seller, 
+            seller=sellers, 
             product_name=product_name, 
             price=price,
             stock=stock,
@@ -298,7 +316,7 @@ def add_product(request):
         messages.success(request, "Product added successfully!")
         return redirect('sellerproduct')
 
-    return render(request, 'add_product.html')
+    return render(request, 'add_product.html',{'sellers':sellers})
 
 
 
@@ -362,4 +380,76 @@ def reset_password(request, uidb64, token):
         except User.DoesNotExist:
             return render(request, 'resetpassword.html', {'error': 'Invalid link'})
     return render(request, 'resetpassword.html')
+
+
+
+def edit_view(request, product_id):
+    # Get the product by ID or return a 404 if not found
+    product = get_object_or_404(Product, id=product_id)
+    
+    # Check if the form is submitted via POST request
+    if request.method == 'POST':
+        product_name = request.POST.get('product_name')
+        price = request.POST.get('price')
+        stock = request.POST.get('stock')
+        description = request.POST.get('description')
+        
+        # Validate inputs (basic checks)
+        if not product_name or not description:
+            messages.error(request, 'Product name and description cannot be empty.')
+        elif float(price) < 0:
+            messages.error(request, 'Price should be a positive number.')
+        elif not stock.isdigit() or int(stock) < 0:
+            messages.error(request, 'Stock should be a non-negative integer.')
+        else:
+            # Update the product details
+            product.product_name = product_name
+            product.price = float(price)
+            product.stock = int(stock)
+            product.description = description
+            
+            # Handle image upload
+            if 'image' in request.FILES:
+                product.image = request.FILES['image']
+            
+            product.save()  # Save the updated product details
+            
+            messages.success(request, 'Product updated successfully!')
+            return redirect('sellerproduct')  # Redirect to seller dashboard or product listing
+    
+    context = {
+        'product': product
+    }
+    
+    return render(request, 'editproduct.html', context)
+
+
+
+
+def product_list_view(request):
+    # Fetch all approved products from the database
+    products = Product.objects.filter(seller__approved=True)
+
+    # Set up pagination (e.g., 9 products per page)
+    paginator =Paginator(products, 9)  # Show 9 products per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Pass paginated products to the template
+    context = {
+        'products': page_obj
+    }
+
+    return render(request, 'products.html', context)
+
+def product_detail(request, product_id):
+    # Get the product by its ID, or return a 404 error if not found
+    product = get_object_or_404(Product, id=product_id)
+    
+    # Render the product detail template with product data
+    context = {
+        'product': product,
+    }
+    return render(request, 'product_detail.html', context)
+
 

@@ -171,10 +171,10 @@
             
             emailInput.addEventListener('input', function () {
                 // Updated regex: No numbers allowed, valid email format, and supports more top-level domains
-                const emailRegex = /^[^\d][a-zA-Z]+(?:\.[a-zA-Z]+)*@[a-zA-Z]+\.[a-zA-Z]{2,}$/;
+                const emailRegex = /^[^\d][a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@[a-zA-Z]+\.[a-zA-Z]{2,}$/;
             
                 if (!emailRegex.test(emailInput.value)) {
-                    emailError.textContent = 'Invalid email. No numbers allowed, must contain "@" and have a valid domain.';
+                    emailError.textContent = 'Invalid email.must contain "@" and have a valid domain.';
                     emailInput.classList.add('error');
                 } else {
                     emailError.textContent = '';

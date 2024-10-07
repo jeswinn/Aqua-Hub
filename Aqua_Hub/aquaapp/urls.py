@@ -40,6 +40,11 @@ urlpatterns = [
       path('about',about_view, name='about'),
       path('sellerproduct/',seller_product, name='sellerproduct'),
       path('oauth/', include('social_django.urls', namespace='social')),
+      path('edit_product/<int:product_id>',edit_view,name='edit_product'),
+      path('prouct_list/',product_list_view,name='product_list'),
+      path('product/<int:product_id>/',product_detail, name='product_detail'),
+    #   path('blog',blog_view,name='blog'),
+      
      
     
     

@@ -1,0 +1,70 @@
+{% extends 'newindex.html' %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Product Image Section -->
+        <div class="col-md-6">
+            <img src="{{ product.image.url }}" alt="{{ product.product_name }}" class="img-fluid">
+        </div>
+
+        <!-- Product Details Section -->
+        <div class="col-md-6">
+            <h2>{{ product.product_name }}</h2>
+            <h4 class="text-success">₹{{ product.price }}</h4>
+            <p>{{ product.description }}</p>
+            
+            <!-- Seller Information -->
+            <h5>Seller: {{ product.seller.shop_name }}</h5>
+
+            <!-- Quantity Selector -->
+            <div class="my-3">
+                <label for="quantity" class="form-label">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" min="1" value="1" class="form-control" style="width: 100px;">
+            </div>
+
+            <!-- Delivery Details -->
+            <div class="my-4">
+                <h5>Delivery Details</h5>
+                <p>All products come with open box delivery.</p>
+                <p>Delivery within 3-5 business days.</p>
+                <p>Free delivery on orders above ₹500.</p>
+            </div>
+
+            <!-- Return Policy -->
+            <div class="my-4">
+                <h5>Return Policy</h5>
+                <p>
+                    Eligibility for Returns
+Items must be returned within 7 days from the date of delivery.
+Products must be unused, in their original packaging, and in the same condition as delivered. Items showing signs of wear or damage will not be eligible for a return.
+Fish and other live products: Due to the nature of live products, returns are only accepted if the fish arrives dead or in unhealthy condition. In such cases, photographic proof must be provided within 24 hours of delivery.
+                    .</p>
+            </div>
+           
+
+            <!-- Rating Section -->
+            {% comment %} <div class="my-4">
+                <h5>Customer Ratings</h5>
+                <p>Rating: <span class="text-warning">{{ product.rating }} / 5</span></p>
+                <div class="stars">
+                    {% for i in 1|to:5 %}
+                        {% if product.rating >= i %}
+                            <i class="bi bi-star-fill text-warning"></i>
+                        {% else %}
+                            <i class="bi bi-star text-warning"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div> {% endcomment %}
+            </div>
+
+            <!-- Buttons for Cart, Booking, and Reviews -->
+            <div class="mt-4 d-flex">
+                <button class="btn btn-primary btn-lg me-3">Add to Cart</button>
+                <button class="btn btn-success btn-lg me-3">Book Now</button>
+                {% comment %} <a href="{% url 'product_reviews' product.id %}" class="btn btn-outline-info btn-lg">View Reviews</a> {% endcomment %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

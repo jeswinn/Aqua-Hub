@@ -12,6 +12,7 @@
           <th style="border: 1px solid #ddd; padding: 8px;">Username</th>
           <th style="border: 1px solid #ddd; padding: 8px;">Email</th>
           <th style="border: 1px solid #ddd; padding: 8px;">Location</th>
+          <th style="border: 1px solid #ddd; padding: 8px;">Licensing Document</th>
           <th style="border: 1px solid #ddd; padding: 8px;">Actions</th>
         </tr>
       </thead>
@@ -23,9 +24,13 @@
           <td style="border: 1px solid #ddd; padding: 8px;">{{ seller.email }}</td>
           <td style="border: 1px solid #ddd; padding: 8px;">{{ seller.location }}</td>
           <td style="border: 1px solid #ddd; padding: 8px;">
-            {% comment %} <a href="{% url 'seller_registration_details' seller.id %}"> {% endcomment %}
-              {% comment %} <button style="padding: 5px 10px; margin-right: 5px; background-color: #007bff; color: white; border: none; cursor: pointer;">Reject</button>
-            </a> {% endcomment %}
+            {% if seller.licensing_document %}
+              <a href="{{ seller.licensing_document.url }}" target="_blank">View Document</a>
+            {% else %}
+              No document uploaded
+            {% endif %}
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px;">
             <form method="POST" action="{% url 'approve_seller' seller.id %}" style="display: inline;">
               {% csrf_token %}
               <button type="submit" style="padding: 5px 10px; background-color: #28a745; color: white; border: none; cursor: pointer;">Approve</button>

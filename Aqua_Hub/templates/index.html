@@ -1,8 +1,10 @@
+{% extends 'newindex.html' %}
 {% load static %}
+{% block body %}
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
+{% comment %} <head>
     <meta charset="utf-8">
     <title>AQUA-HUB</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -80,7 +82,7 @@
                 <a href="{% url 'index'%}" class="nav-item nav-link">Home</a>
                 <a href="{% url 'about'%}" class="nav-item nav-link">About</a>
                 <a href="{% url 'slogin'%}" class="nav-item nav-link">Sellers corner</a>
-                <a href="product.html" class="nav-item nav-link">Products</a>
+                <a href="{% url 'product_list'%}" class="nav-item nav-link">Products</a>
                
                 <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Community</a>
@@ -94,7 +96,7 @@
             </div>
         </div>
     </nav>
-    <!-- Navbar End -->
+    <!-- Navbar End --> {% endcomment %}
 
 
     <!-- Hero Start -->
@@ -103,7 +105,7 @@
             <div class="row justify-content-start">
                 <div class="col-lg-8 text-center text-lg-start">
                     <h1 class="display-1 text-uppercase text-white mb-lg-4">Aqua Hub</h1>
-                    <h1 class="text-uppercase text-white mb-lg-4">By The Best Quality Fishes</h1>
+                    <h1 class="text-uppercase text-white mb-lg-4">Buy The Best Quality Fishes</h1>
                     <p class="fs-4 text-white mb-lg-4">Aqua Hub is an innovative online marketplace dedicated to aquarium enthusiasts, offering a wide selection of fish, aquariums, and fish food. With user-friendly features,
                          including secure purchasing, real-time order tracking, and open box delivery, Aqua Hub simplifies the process of creating and maintaining vibrant aquatic environments.</p>
                     <div class="d-flex align-items-center justify-content-center justify-content-lg-start pt-5">
@@ -154,7 +156,7 @@
                 <div class="col-lg-7">
                     <div class="border-start border-5 border-primary ps-5 mb-5">
                         <h6 class="text-primary text-uppercase">About Us</h6>
-                        <h1 class="display-5 text-uppercase mb-0">For All your Ornemental fish needs</h1>
+                        <h1 class="display-5 text-uppercase mb-0">For All your Ornamental fish needs</h1>
                     </div>
                     <h4 class="text-body mb-4"></h4>
                     <div class="bg-light p-4">
@@ -192,6 +194,7 @@
 
 
     <!-- Products Start -->
+     
    
     <!-- Products End -->
 
@@ -242,3 +245,4 @@
 </body>
 
 </html>
+{% endblock %}

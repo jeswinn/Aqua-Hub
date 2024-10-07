@@ -46,19 +46,28 @@
 
     <div class="container my-5">
         <h2 class="text-center">Add New Product</h2>
-        <form method="POST" action="{% url 'add_product' %}" enctype="multipart/form-data" class="shadow p-5 rounded bg-light">
+        <form method="POST" action="{% url 'add_product' %}" enctype="multipart/form-data" class="shadow p-5 rounded bg-light" id="productForm">
             {% csrf_token %}
+            {% if sellers %}
+            <div class="form-group mb-3">
+                <label for="product_cat">Category</label>
+                <input type="text" name="product_cat" class="form-control" value="{{ sellers.product_type }}" disabled>
+            </div>
+            {% endif %}
             <div class="form-group mb-3">
                 <label for="product_name">Product Name</label>
                 <input type="text" name="product_name" class="form-control" placeholder="Enter Product Name" required>
+                <small id="productNameError" class="text-danger"></small>
             </div>
             <div class="form-group mb-3">
                 <label for="price">Product Price</label>
                 <input type="number" name="price" class="form-control" placeholder="Enter Product Price" required>
+                <small id="priceError" class="text-danger"></small>
             </div>
             <div class="form-group mb-3">
                 <label for="stock">Product Stock</label>
                 <input type="number" name="stock" class="form-control" placeholder="Enter Product Stock" required>
+                <small id="stockError" class="text-danger"></small>
             </div>
             <div class="form-group mb-3">
                 <label for="image">Product Image</label>
@@ -66,13 +75,76 @@
             </div>
             <div class="form-group mb-3">
                 <label for="description">Product Description</label>
-                <textarea name="description" class="form-control" placeholder="Product Description" rows="3"></textarea>
+                <textarea name="description" class="form-control" placeholder="Product Description" rows="3" required></textarea>
+                <small id="descriptionError" class="text-danger"></small>
             </div>
             <div class="text-center">
                 <button type="submit" class="btn btn-success btn-lg">Add Product</button>
             </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('productForm');
+            const productNameInput = document.querySelector('input[name="product_name"]');
+            const priceInput = document.querySelector('input[name="price"]');
+            const stockInput = document.querySelector('input[name="stock"]');
+            const descriptionInput = document.querySelector('textarea[name="description"]');
+            const productNameError = document.getElementById('productNameError');
+            const priceError = document.getElementById('priceError');
+            const stockError = document.getElementById('stockError');
+            const descriptionError = document.getElementById('descriptionError');
+
+            form.addEventListener('submit', function (event) {
+                let isValid = true;
+
+                // Validate product name (letters only, no empty)
+                const productName = productNameInput.value.trim();
+                const productNameRegex = /^[a-zA-Z\s]+$/;
+                if (productName === "") {
+                    productNameError.textContent = "Product name cannot be empty.";
+                    isValid = false;
+                } else if (!productNameRegex.test(productName)) {
+                    productNameError.textContent = "Product name should contain only letters and spaces.";
+                    isValid = false;
+                } else {
+                    productNameError.textContent = "";
+                }
+
+                // Validate price (should be a positive number)
+                const price = priceInput.value.trim();
+                if (price === "" || isNaN(price) || Number(price) < 0) {
+                    priceError.textContent = "Price must be a number greater than or equal to 0.";
+                    isValid = false;
+                } else {
+                    priceError.textContent = "";
+                }
+
+                // Validate stock (should be a positive number)
+                const stock = stockInput.value.trim();
+                if (stock === "" || isNaN(stock) || Number(stock) < 0) {
+                    stockError.textContent = "Stock must be a number greater than or equal to 0.";
+                    isValid = false;
+                } else {
+                    stockError.textContent = "";
+                }
+
+                // Validate description (shouldn't be empty)
+                const description = descriptionInput.value.trim();
+                if (description === "") {
+                    descriptionError.textContent = "Product description cannot be empty.";
+                    isValid = false;
+                } else {
+                    descriptionError.textContent = "";
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
 
     <script src="{% static 'js/main.js' %}"></script>
 </body>

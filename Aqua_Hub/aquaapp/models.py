@@ -11,11 +11,12 @@ class userreg(User):
 
 class Seller(models.Model):
     shop_name = models.CharField(max_length=100)
-    username=models.CharField(unique=True,max_length=100)
+    username = models.CharField(unique=True, max_length=100)
     email = models.EmailField(unique=True)
-    password=models.CharField(max_length=100)
+    password = models.CharField(max_length=100)
     location = models.CharField(max_length=255)
     contact_num = models.CharField(max_length=15)
+    licensing_document = models.FileField(upload_to='licensing_docs/', blank=True, null=True)  # New field for PDF upload
     product_type = models.CharField(max_length=50, choices=[
         ('fish', 'Fish'),
         ('aquariums', 'Aquariums'),
@@ -25,6 +26,7 @@ class Seller(models.Model):
 
     def __str__(self):
         return self.shop_name
+
 
 class Product(models.Model):
     seller = models.ForeignKey(Seller, on_delete=models.CASCADE)  # Link to Seller table
@@ -37,3 +39,15 @@ class Product(models.Model):
     
     def __str__(self):
         return self.product_name
+
+
+
+class Blog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    image = models.ImageField(upload_to='blogs/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
