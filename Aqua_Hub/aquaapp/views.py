@@ -21,6 +21,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
+from django.views.decorators.cache import never_cache   
 
 
 
@@ -39,9 +40,11 @@ def login_view(request):
             if user.is_superuser:
                 request.session['master']=username
                 return redirect('approve')
-            return redirect('product_list')
+            else:
+                request.session['user']=username
+                return redirect('product_list')
         else:
-            request.session['user']=username
+            
             return render(request,'userlogin.html',{
                 'message':"Invalid Username Or Password"
             })
@@ -237,7 +240,7 @@ def seller_dash(request):
     return render(request, 'sellerdash.html')
 
 
-
+@never_cache
 def admin_approv(request):
     if 'master' in request.session:
     # Fetch all sellers whose 'approved' field is False (i.e., pending approval)
@@ -249,32 +252,36 @@ def admin_approv(request):
         return redirect('login')
 
 def approve_seller(request, id):
+    
     seller = get_object_or_404(Seller,pk=id)
     seller.approved=True    
     seller.save()
     return redirect('approve')
 
 
-
+@never_cache
 def approved_seller(request):
-    # Fetch all sellers who are approved
-    approved_sellers = Seller.objects.filter(approved=True)
+    if 'master' in request.session:
+        # Fetch all sellers who are approved
+        approved_sellers = Seller.objects.filter(approved=True)
+        
+        return render(request, 'approvedsellers.html', {'approved_sellers': approved_sellers})
+    else:
+        return redirect('login')
     
-    return render(request, 'approvedsellers.html', {'approved_sellers': approved_sellers})
-
 def remove_seller(request, seller_id):
     # Fetch the seller by id
     seller = get_object_or_404(Seller, id=seller_id)
     
     if request.method == 'POST':
         # Remove the seller or change the approved status to False
-        seller.delete()  # This will remove the seller completely
+         # This will remove the seller completely
         # Alternatively, you can mark the seller as unapproved:
-        # seller.approved = False
-        # seller.save()
+         seller.approved = False
+         seller.save()
 
         # Redirect back to the list of approved sellers
-        return redirect('sellerappr')
+    return redirect('sellerappr')
 
     return render(request, 'approvedsellers.html')
 
@@ -302,6 +309,11 @@ def add_product(request):
         stock = request.POST.get('stock')
         description = request.POST.get('description')  # Get description from form
         image = request.FILES.get('image')
+        water_quality = request.POST['water_quality']
+        tank_size = request.POST['tank_size']
+        feeding = request.POST['feeding']
+        behavior = request.POST['behavior']
+        health_issues = request.POST['health_issues']
 
         # Create a new product and associate it with the seller
         product = Product.objects.create(
@@ -310,7 +322,12 @@ def add_product(request):
             price=price,
             stock=stock,
             description=description,
-            image=image
+            image=image,
+            water_quality=water_quality,
+            tank_size=tank_size,
+            feeding=feeding,
+            behavior=behavior,
+            health_issues=health_issues,
         )
         product.save()
         messages.success(request, "Product added successfully!")
@@ -393,8 +410,13 @@ def edit_view(request, product_id):
         price = request.POST.get('price')
         stock = request.POST.get('stock')
         description = request.POST.get('description')
+        water_quality = request.POST.get('water_quality')
+        tank_size = request.POST.get('tank_size')
+        feeding = request.POST.get('feeding')
+        behavior = request.POST.get('behavior')
+        health_issues = request.POST.get('health_issues')
         
-        # Validate inputs (basic checks)
+        # Validate inputs
         if not product_name or not description:
             messages.error(request, 'Product name and description cannot be empty.')
         elif float(price) < 0:
@@ -407,6 +429,11 @@ def edit_view(request, product_id):
             product.price = float(price)
             product.stock = int(stock)
             product.description = description
+            product.water_quality = water_quality
+            product.tank_size = tank_size
+            product.feeding = feeding
+            product.behavior = behavior
+            product.health_issues = health_issues
             
             # Handle image upload
             if 'image' in request.FILES:
@@ -424,23 +451,53 @@ def edit_view(request, product_id):
     return render(request, 'editproduct.html', context)
 
 
+def disable_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    
+    if 'seller_id' in request.session:
+        product.is_active = False
+        product.save()
+        messages.success(request, f"{product.product_name} has been disabled.")
+    else:
+        messages.error(request, "You are not authorized to disable this product.")
+    
+    return redirect('sellerproduct') 
 
 
+def enable_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    
+    if 'seller_id' in request.session:
+        product.is_active = True
+        product.save()
+        messages.success(request, f"{product.product_name} has been enabled.")
+    else:
+        messages.error(request, "You are not authorized to disable this product.")
+    
+    return redirect('sellerproduct') 
+
+
+
+
+@never_cache
 def product_list_view(request):
-    # Fetch all approved products from the database
-    products = Product.objects.filter(seller__approved=True)
+    
+        # Fetch all approved products from the database
+        products = Product.objects.filter(is_active=True)
 
-    # Set up pagination (e.g., 9 products per page)
-    paginator =Paginator(products, 9)  # Show 9 products per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+        # Set up pagination (e.g., 9 products per page)
+        paginator =Paginator(products, 9)  # Show 9 products per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
 
-    # Pass paginated products to the template
-    context = {
-        'products': page_obj
-    }
+        # Pass paginated products to the template
+        context = {
+            'products': page_obj
+        }
 
-    return render(request, 'products.html', context)
+        return render(request, 'products.html', context)
+    
+        
 
 def product_detail(request, product_id):
     # Get the product by its ID, or return a 404 error if not found
@@ -453,3 +510,132 @@ def product_detail(request, product_id):
     return render(request, 'product_detail.html', context)
 
 
+@never_cache
+@login_required(login_url='login')
+def add_to_cart(request, product_id):
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to add items to your cart.')
+        return redirect('login')
+
+    product = get_object_or_404(Product, id=product_id)
+    quantity = int(request.POST.get('quantity',1)) # Get quantity from the form
+
+    # Check if the user already has a cart
+    cart, created = Cart.objects.get_or_create(user=request.user)
+
+    # Check if the product is already in the cart
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    
+    if not created:
+        cart_item.quantity += quantity  # Update quantity if it already exists
+    cart_item.save()
+
+    messages.success(request, f'{product.product_name} has been added to your cart.')
+    return redirect('view_cart')  # Redirect to view cart page
+
+
+@login_required(login_url='login')
+def view_cart(request):
+    if 'user' in request.session:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.all()
+        total_price = sum(item.get_total_price() for item in cart_items)
+        context = {
+            'cart_items': cart_items,
+            'total_price': total_price,
+        }
+        return render(request, 'cart.html', context)
+
+    else:
+        return redirect('login')
+
+@login_required
+def remove_from_cart(request, item_id):
+    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    cart_item.delete()
+    return redirect('view_cart')
+
+
+@login_required(login_url='login')
+def book_now(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please login to book this product.')
+        return redirect('login')
+    
+
+@never_cache
+@login_required(login_url='login')
+def profile_view(request):
+    if 'user' in request.session:
+        user = request.user.userreg
+        # Fetch the related usereg record
+        
+        if request.method == 'POST':
+            # Get user details from the form
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            email = request.POST.get('email')
+            phone_number = request.POST.get('phone_number')
+            
+            
+            # Update user fields
+            user.first_name = first_name
+            user.last_name = last_name
+            user.email = email
+            user.phone_number =phone_number
+            
+            # Update the phone number in usereg table
+            
+
+            user.save()  # Save the updated user details
+        
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('product_list')  # Redirect to profile page after saving
+
+        context = {
+            'user': user,
+            
+        }
+
+        return render(request, 'profile_edit.html', context)
+    else:
+        return redirect('login')
+
+
+
+
+
+def edit_seller_profile(request):
+    # Check if seller is logged in by checking session
+    if 'seller_id' not in request.session:
+        messages.error(request, 'You need to log in to access this page.')
+        return redirect('slogin')  # Redirect to login page if not authenticated
+
+    # Get the seller ID from session
+    seller_id = request.session['seller_id']
+
+    # Fetch the seller instance based on the seller ID stored in the session
+    seller = Seller.objects.get(id=seller_id)
+
+    if request.method == 'POST':
+        # Update the seller's information
+        seller.email = request.POST.get('email')
+        seller.contact_num = request.POST.get('contact_num')
+        seller.location = request.POST.get('location')
+
+        # Validate the input data as needed
+        if not seller.email or not seller.contact_num or not seller.location:
+            messages.error(request, 'All fields are required.')
+        else:
+            # Save the updated seller information
+            seller.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('sellerproduct')  # Redirect to the profile page after saving
+
+    # Render the profile editing template with current seller data
+    context = {
+        'seller': seller
+    }
+    return render(request, 'seller_profile.html', context)

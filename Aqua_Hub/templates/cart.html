@@ -1,0 +1,126 @@
+{% extends 'newindex.html' %}
+
+{% block body %}
+<div class="container my-5">
+    <h2 class="mb-4 text-center">Your Shopping Cart</h2>
+
+    <!-- Cart Items -->
+    <div class="cart-items">
+        {% for item in cart_items %}
+        <div class="cart-item card shadow-sm mb-4 p-4 position-relative">
+            <div class="row">
+                <!-- Item Number -->
+                <div class="item-number-circle">
+                    <span>{{ forloop.counter }}</span>
+                </div>
+
+                <!-- Product Image -->
+                <div class="col-md-4">
+                    <div class="product-image-wrapper">
+                        <img src="{{ item.product.image.url }}" class="img-fluid rounded hover-effect" alt="{{ item.product.product_name }}" style="max-height: 300px; object-fit: cover; width: 100%;">
+                    </div>
+                </div>
+
+                <!-- Product Details -->
+                <div class="col-md-8 d-flex flex-column justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ item.product.product_name }}</h5>
+                        <p class="card-text">Price: ₹{{ item.product.price }}</p>
+                        <p class="card-text">Quantity: {{ item.quantity }}</p>
+                        <p class="card-text">Total: ₹{{ item.get_total_price }}</p> <!-- Total Price for the item -->
+                    </div>
+
+                    <!-- Remove Button -->
+                    <form method="POST" action="{% url 'remove_from_cart' item.id %}" class="mt-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <div class="alert alert-info">Your cart is empty</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Cart Total and Checkout -->
+    {% if cart_items %}
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <h4>Total: ₹{{ total_price }}</h4> <!-- Overall total price -->
+        <a href="#" class="btn btn-success btn-lg">Proceed to Checkout</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript for Auto-Reload on Back Button -->
+<script>
+    window.addEventListener('pageshow', function(event) {
+        // If the page was loaded from cache, it will have persisted = true.
+        if (event.persisted) {
+            window.location.reload(); // Force reload the page.
+        }
+    });
+</script>
+
+<!-- Custom Styles -->
+<style>
+    /* Styling for cart items */
+    .cart-item {
+        border: 1px solid #e0e0e0;
+        transition: box-shadow 0.3s ease;
+        border-radius: 10px;
+        background-color: #e8f5e9; /* Light green background */
+    }
+
+    .cart-item:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-image-wrapper img {
+        transition: transform 0.3s ease;
+        border-radius: 8px;
+    }
+
+    .product-image-wrapper img:hover {
+        transform: scale(1.05);
+    }
+
+    /* Styling for item number */
+    .item-number-circle {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: #28a745; /* Green background */
+        color: #fff;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    /* Custom button and text styling */
+    .cart-item .card-title {
+        font-weight: 600;
+        color: #222;
+    }
+
+    .cart-item .card-text {
+        font-size: 15px;
+        color: #555;
+    }
+
+    /* Aligning buttons for quantity control */
+    .cart-item .d-flex.align-items-center button {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        font-size: 18px;
+    }
+</style>
+{% endblock %}

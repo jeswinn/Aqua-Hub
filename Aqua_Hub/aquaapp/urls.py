@@ -43,6 +43,16 @@ urlpatterns = [
       path('edit_product/<int:product_id>',edit_view,name='edit_product'),
       path('prouct_list/',product_list_view,name='product_list'),
       path('product/<int:product_id>/',product_detail, name='product_detail'),
+      path('add_to_cart/<int:product_id>/',add_to_cart, name='add_to_cart'),
+      path('book_now/<int:product_id>/',book_now, name='book_now'),
+      path('cart/', view_cart, name='view_cart'),
+      path('remove_from_cart/<int:item_id>/', remove_from_cart, name='remove_from_cart'),
+      path('disable_product/<int:product_id>/',disable_product, name='disable_product'),
+      path('enable_product/<int:product_id>/',enable_product, name='enable_product'),
+      path('profile/', profile_view, name='Profile'),
+      path('sprofile/',edit_seller_profile, name='sprofile'),
+
+
     #   path('blog',blog_view,name='blog'),
       
      

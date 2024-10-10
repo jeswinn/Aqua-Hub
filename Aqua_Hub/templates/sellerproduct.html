@@ -35,7 +35,12 @@
                                 <td>
                                     <div class="btn-group">
                                         <a href="{% url 'edit_product' product.id %}" class="btn btn-warning btn-sm">Edit</a>
-                                        {% comment %} <a href="{% url 'remove_product' product.id %}" class="btn btn-danger btn-sm">Remove</a> {% endcomment %}
+                                        {% if product.is_active %}
+                                        <a href="{% url 'disable_product' product.id %}" class="btn btn-danger btn-sm">disable</a>
+                                        {% else %}
+                                        <a href="{% url 'enable_product' product.id %}" class="btn btn-success btn-sm">enable</a>
+                                        {% endif %}
+                                          
                                     </div> 
                                 </td>
                             </tr>

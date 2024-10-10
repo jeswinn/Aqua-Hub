@@ -1,0 +1,64 @@
+{% extends 'sellerdash.html'%}
+{% block content %}
+<div class="container my-5">
+    <h2 class="text-center">Edit Seller Profile</h2>
+    <form method="POST" class="shadow p-5 rounded bg-light">
+        {% csrf_token %}
+        
+        <div class="form-group mb-3">
+            <label for="email">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ seller.email }}" required>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="contact_num">Contact Number</label>
+            <input type="text" name="contact_num" class="form-control" value="{{ seller.contact_num }}" required>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="location">Location</label>
+            <input type="text" name="location" class="form-control" value="{{ seller.location }}" required>
+        </div>
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-success btn-lg">Update Profile</button>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript for Live Validation -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailInput = document.querySelector('input[name="email"]');
+        const contactInput = document.querySelector('input[name="contact_num"]');
+        const locationInput = document.querySelector('input[name="location"]');
+
+        contactInput.addEventListener('input', function () {
+            const contactNumber = contactInput.value.trim();
+            if (contactNumber.length !== 10 || isNaN(contactNumber)) {
+                contactInput.setCustomValidity("Contact number must be exactly 10 digits.");
+            } else {
+                contactInput.setCustomValidity("");
+            }
+        });
+
+        emailInput.addEventListener('input', function () {
+            const email = emailInput.value.trim();
+            if (!email.includes('@')) {
+                emailInput.setCustomValidity("Please enter a valid email address.");
+            } else {
+                emailInput.setCustomValidity("");
+            }
+        });
+
+        locationInput.addEventListener('input', function () {
+            const location = locationInput.value.trim();
+            if (location.length === 0) {
+                locationInput.setCustomValidity("Location cannot be empty.");
+            } else {
+                locationInput.setCustomValidity("");
+            }
+        });
+    });
+</script>
+{% endblock %}

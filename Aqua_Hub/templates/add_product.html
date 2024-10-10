@@ -54,30 +54,70 @@
                 <input type="text" name="product_cat" class="form-control" value="{{ sellers.product_type }}" disabled>
             </div>
             {% endif %}
+            
+            <!-- Product Fields -->
             <div class="form-group mb-3">
                 <label for="product_name">Product Name</label>
                 <input type="text" name="product_name" class="form-control" placeholder="Enter Product Name" required>
                 <small id="productNameError" class="text-danger"></small>
             </div>
+            
             <div class="form-group mb-3">
                 <label for="price">Product Price</label>
                 <input type="number" name="price" class="form-control" placeholder="Enter Product Price" required>
                 <small id="priceError" class="text-danger"></small>
             </div>
+            
             <div class="form-group mb-3">
                 <label for="stock">Product Stock</label>
                 <input type="number" name="stock" class="form-control" placeholder="Enter Product Stock" required>
                 <small id="stockError" class="text-danger"></small>
             </div>
+            
             <div class="form-group mb-3">
                 <label for="image">Product Image</label>
                 <input type="file" name="image" class="form-control">
             </div>
+            
             <div class="form-group mb-3">
                 <label for="description">Product Description</label>
                 <textarea name="description" class="form-control" placeholder="Product Description" rows="3" required></textarea>
                 <small id="descriptionError" class="text-danger"></small>
             </div>
+            
+            <!-- Fish Care Information -->
+            <h3 class="mt-4">Fish Care Information</h3>
+            
+            <div class="form-group mb-3">
+                <label for="water_quality">Water Quality</label>
+                <input type="text" name="water_quality" class="form-control" placeholder="e.g., pH 6.0-7.0, Soft to Moderately Hard" required>
+                <small id="waterQualityError" class="text-danger"></small>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="tank_size">Tank Size</label>
+                <input type="text" name="tank_size" class="form-control" placeholder="e.g., 20 gallons" required>
+                <small id="tankSizeError" class="text-danger"></small>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="feeding">Feeding</label>
+                <input type="text" name="feeding" class="form-control" placeholder="e.g., Flakes, Pellets, Vegetables" required>
+                <small id="feedingError" class="text-danger"></small>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="behavior">Behavior</label>
+                <input type="text" name="behavior" class="form-control" placeholder="e.g., Peaceful, Schooling" required>
+                <small id="behaviorError" class="text-danger"></small>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="health_issues">Health Issues</label>
+                <input type="text" name="health_issues" class="form-control" placeholder="e.g., Swim Bladder Disorder, Ich" required>
+                <small id="healthIssuesError" class="text-danger"></small>
+            </div>
+            
             <div class="text-center">
                 <button type="submit" class="btn btn-success btn-lg">Add Product</button>
             </div>
@@ -91,53 +131,52 @@
             const priceInput = document.querySelector('input[name="price"]');
             const stockInput = document.querySelector('input[name="stock"]');
             const descriptionInput = document.querySelector('textarea[name="description"]');
-            const productNameError = document.getElementById('productNameError');
-            const priceError = document.getElementById('priceError');
-            const stockError = document.getElementById('stockError');
-            const descriptionError = document.getElementById('descriptionError');
+            const careInfoInputs = {
+                waterQuality: document.querySelector('input[name="water_quality"]'),
+                tankSize: document.querySelector('input[name="tank_size"]'),
+                feeding: document.querySelector('input[name="feeding"]'),
+                behavior: document.querySelector('input[name="behavior"]'),
+                healthIssues: document.querySelector('input[name="health_issues"]'),
+            };
+            const errors = {
+                productNameError: document.getElementById('productNameError'),
+                priceError: document.getElementById('priceError'),
+                stockError: document.getElementById('stockError'),
+                descriptionError: document.getElementById('descriptionError'),
+                waterQualityError: document.getElementById('waterQualityError'),
+                tankSizeError: document.getElementById('tankSizeError'),
+                feedingError: document.getElementById('feedingError'),
+                behaviorError: document.getElementById('behaviorError'),
+                healthIssuesError: document.getElementById('healthIssuesError'),
+            };
 
             form.addEventListener('submit', function (event) {
                 let isValid = true;
-
-                // Validate product name (letters only, no empty)
-                const productName = productNameInput.value.trim();
-                const productNameRegex = /^[a-zA-Z\s]+$/;
-                if (productName === "") {
-                    productNameError.textContent = "Product name cannot be empty.";
+                
+                // Validate each field
+                if (productNameInput.value.trim() === "") {
+                    errors.productNameError.textContent = "Product name cannot be empty.";
                     isValid = false;
-                } else if (!productNameRegex.test(productName)) {
-                    productNameError.textContent = "Product name should contain only letters and spaces.";
-                    isValid = false;
-                } else {
-                    productNameError.textContent = "";
                 }
-
-                // Validate price (should be a positive number)
-                const price = priceInput.value.trim();
-                if (price === "" || isNaN(price) || Number(price) < 0) {
-                    priceError.textContent = "Price must be a number greater than or equal to 0.";
+                if (priceInput.value.trim() === "" || isNaN(priceInput.value) || Number(priceInput.value) < 0) {
+                    errors.priceError.textContent = "Price must be a valid number.";
                     isValid = false;
-                } else {
-                    priceError.textContent = "";
                 }
-
-                // Validate stock (should be a positive number)
-                const stock = stockInput.value.trim();
-                if (stock === "" || isNaN(stock) || Number(stock) < 0) {
-                    stockError.textContent = "Stock must be a number greater than or equal to 0.";
+                if (stockInput.value.trim() === "" || isNaN(stockInput.value) || Number(stockInput.value) < 0) {
+                    errors.stockError.textContent = "Stock must be a valid number.";
                     isValid = false;
-                } else {
-                    stockError.textContent = "";
                 }
-
-                // Validate description (shouldn't be empty)
-                const description = descriptionInput.value.trim();
-                if (description === "") {
-                    descriptionError.textContent = "Product description cannot be empty.";
+                if (descriptionInput.value.trim().length < 20) {
+                    errors.descriptionError.textContent = "Product description must be at least 20 characters.";
                     isValid = false;
-                } else {
-                    descriptionError.textContent = "";
                 }
+                // Fish care information validation
+                Object.keys(careInfoInputs).forEach(key => {
+                    if (careInfoInputs[key].value.trim() === "") {
+                        errors[`${key}Error`].textContent = `${key.replace('_', ' ')} is required.`;
+                        isValid = false;
+                    }
+                });
 
                 if (!isValid) {
                     event.preventDefault();
