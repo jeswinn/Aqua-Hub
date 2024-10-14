@@ -478,25 +478,40 @@ def enable_product(request, product_id):
 
 
 
-
 @never_cache
 def product_list_view(request):
-    
-        # Fetch all approved products from the database
-        products = Product.objects.filter(is_active=True)
+    # Get the search query if available
+    query = request.GET.get('q')
 
-        # Set up pagination (e.g., 9 products per page)
-        paginator =Paginator(products, 9)  # Show 9 products per page
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
+    # Get the selected letter for alphabetical sorting
+    letter = request.GET.get('letter')
 
-        # Pass paginated products to the template
-        context = {
-            'products': page_obj
-        }
+    # Fetch all approved and active products
+    products = Product.objects.filter(is_active=True)
 
-        return render(request, 'products.html', context)
-    
+    # Filter products by search query if provided
+    if query:
+        products = products.filter(product_name__icontains=query)
+
+    # Filter products by the first letter if a letter is selected
+    if letter:
+        products = products.filter(product_name__istartswith=letter)  # Case-insensitive filtering by first letter
+
+    # Set up pagination (e.g., 9 products per page)
+    paginator = Paginator(products, 9)  # Show 9 products per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Pass the paginated products, search query, and selected letter to the template
+    context = {
+        'products': page_obj,
+        'query': query,  # To retain the search query in the search bar
+        'letter': letter  # To retain the selected letter for alphabetical filtering
+    }
+
+    return render(request, 'products.html', context)
+
+
         
 
 def product_detail(request, product_id):

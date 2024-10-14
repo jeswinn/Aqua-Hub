@@ -22,32 +22,32 @@
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.3); /* Semi-transparent white */
+            background: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
             width: 100%;
             max-width: 400px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.4); /* Border with transparency */
-            backdrop-filter: blur(15px); /* Blur effect for the background */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(12px); /* Blur effect for a modern look */
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .container:hover {
-            transform: scale(1.05); /* Slight scale effect on hover */
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         }
 
         h1 {
-            color: #28a745; /* Green color for the heading */
-            margin-bottom: 20px;
-            font-size: 28px;
+            color: #28a745; /* Aqua Hub's signature green */
+            font-size: 30px;
             font-weight: bold;
+            margin-bottom: 30px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-align: left;
         }
 
@@ -60,25 +60,26 @@
             width: 100%;
             padding: 12px;
             border-radius: 5px;
-            background: rgba(255, 255, 255, 0.8); /* More solid white input */
+            background: #f9f9f9;
             border: 1px solid #ddd;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
         .form-group input:focus {
             border-color: #28a745; /* Green border on focus */
+            box-shadow: 0px 0px 12px rgba(40, 167, 69, 0.4);
             outline: none;
-            box-shadow: 0px 0px 12px rgba(40, 167, 69, 0.3); /* Light green glow */
         }
 
         .btn {
-            background-color: #28a745; /* Green button */
+            background-color: #28a745; /* Aqua Hub green */
             color: white;
             width: 100%;
             padding: 12px;
             border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.3s ease;
             font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
         }
 
         .btn:hover {
@@ -100,10 +101,11 @@
         .forgot-password-link:hover,
         .google-login-link:hover {
             color: #218838;
+            text-decoration: underline;
         }
 
         .separator {
-            margin: 20px 0;
+            margin: 25px 0;
             font-size: 14px;
             color: #777;
         }
@@ -114,7 +116,7 @@
     <div class="container">
         <h1>Login to Aqua Hub</h1>
         {% if message %}
-            <div>{{ message }}</div>
+            <div class="alert alert-danger">{{ message }}</div>
         {% endif %}
         <form action={% url "login" %} method="POST">
             {% csrf_token %}
