@@ -53,14 +53,14 @@
         const emailError = document.getElementById('emailError');
         const phoneError = document.getElementById('phoneError');
 
-        const nameRegex = /^[A-Za-z]+$/;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^\d{10}$/;
+        const nameRegex = /^[A-Za-z]+$/; // No spaces, only letters
+        const emailRegex = /^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.(com|org|net)$/; // Valid domains
+        const phoneRegex = /^[6-9]\d{9}$/; // Indian phone numbers starting with 6-9
 
         // Live validation for first name
         firstNameInput.addEventListener('input', function () {
             if (!nameRegex.test(firstNameInput.value.trim())) {
-                firstNameError.textContent = "First name must contain only letters.";
+                firstNameError.textContent = "First name must contain only letters and no spaces.";
             } else {
                 firstNameError.textContent = "";
             }
@@ -69,37 +69,26 @@
         // Live validation for last name
         lastNameInput.addEventListener('input', function () {
             if (!nameRegex.test(lastNameInput.value.trim())) {
-                lastNameError.textContent = "Last name must contain only letters.";
+                lastNameError.textContent = "Last name must contain only letters and no spaces.";
             } else {
                 lastNameError.textContent = "";
             }
         });
 
         // Live validation for email
-        document.addEventListener('DOMContentLoaded', function () {
-            const emailInput = document.querySelector('input[name="email"]');
-            const emailError = document.getElementById('emailError');
-        
-            // Regex pattern: first letter cannot be a digit, @ is required, and only certain domains allowed
-            const emailRegex = /^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.(com|org|net)$/;
-        
-            emailInput.addEventListener('input', function () {
-                const emailValue = emailInput.value.trim();
-                
-                // Check if the email passes the regex pattern
-                if (!emailRegex.test(emailValue)) {
-                    emailError.textContent = "Please enter a valid email address (e.g., example@gmail.com).";
-                } else {
-                    emailError.textContent = "";
-                }
-            });
+        emailInput.addEventListener('input', function () {
+            const emailValue = emailInput.value.trim();
+            if (!emailRegex.test(emailValue)) {
+                emailError.textContent = "Please enter a valid email address (e.g., example@gmail.com).";
+            } else {
+                emailError.textContent = "";
+            }
         });
-        
 
         // Live validation for phone number
         phoneNumberInput.addEventListener('input', function () {
             if (!phoneRegex.test(phoneNumberInput.value.trim())) {
-                phoneError.textContent = "Phone number must be exactly 10 digits.";
+                phoneError.textContent = "Phone number must be a valid 10-digit Indian number starting with 6-9.";
             } else {
                 phoneError.textContent = "";
             }
