@@ -28,22 +28,6 @@
 
 <body>
 
-    <nav class="navbar navbar-expand-lg bg-white navbar-light shadow-sm py-3 py-lg-0 px-3 px-lg-0 mb-5">
-        <a href="index.html" class="navbar-brand ms-lg-5">
-            <h1 class="m-0 text-uppercase text-dark"><i class="bi bi-shop fs-1 text-primary me-3"></i>AQUA Hub - SELLER</h1>
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarCollapse">
-            <div class="navbar-nav ms-auto py-0">
-                <a href="dashboard.html" class="nav-item nav-link">MY PRODUCTS</a>
-                <a href="orders.html" class="nav-item nav-link">PROFILE</a>
-                <a href="{% url 'logout' %}" class="nav-item nav-link">LOGOUT</a>
-            </div>
-        </div>
-    </nav>
-
     <div class="container my-5">
         <h2 class="text-center">Add New Product</h2>
         <form method="POST" action="{% url 'add_product' %}" enctype="multipart/form-data" class="shadow p-5 rounded bg-light" id="productForm">
@@ -89,14 +73,14 @@
             <h3 class="mt-4">Fish Care Information</h3>
             
             <div class="form-group mb-3">
-                <label for="water_quality">Water Quality</label>
-                <input type="text" name="water_quality" class="form-control" placeholder="e.g., pH 6.0-7.0, Soft to Moderately Hard" required>
+                <label for="water_quality">Water Quality (e.g., 7-8 pH)</label>
+                <input type="text" name="water_quality" class="form-control" placeholder="e.g., pH 6.0-7.0" required>
                 <small id="waterQualityError" class="text-danger"></small>
             </div>
             
             <div class="form-group mb-3">
-                <label for="tank_size">Tank Size</label>
-                <input type="text" name="tank_size" class="form-control" placeholder="e.g., 20 gallons" required>
+                <label for="tank_size">Tank Size (e.g., 20 gallons)</label>
+                <input type="text" name="tank_size" class="form-control" placeholder="e.g., 20 gallons or 75 liters" required>
                 <small id="tankSizeError" class="text-danger"></small>
             </div>
             
@@ -126,57 +110,72 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('productForm');
-            const productNameInput = document.querySelector('input[name="product_name"]');
+            const productForm = document.getElementById('productForm');
             const priceInput = document.querySelector('input[name="price"]');
-            const stockInput = document.querySelector('input[name="stock"]');
-            const descriptionInput = document.querySelector('textarea[name="description"]');
-            const careInfoInputs = {
-                waterQuality: document.querySelector('input[name="water_quality"]'),
-                tankSize: document.querySelector('input[name="tank_size"]'),
-                feeding: document.querySelector('input[name="feeding"]'),
-                behavior: document.querySelector('input[name="behavior"]'),
-                healthIssues: document.querySelector('input[name="health_issues"]'),
-            };
-            const errors = {
-                productNameError: document.getElementById('productNameError'),
-                priceError: document.getElementById('priceError'),
-                stockError: document.getElementById('stockError'),
-                descriptionError: document.getElementById('descriptionError'),
-                waterQualityError: document.getElementById('waterQualityError'),
-                tankSizeError: document.getElementById('tankSizeError'),
-                feedingError: document.getElementById('feedingError'),
-                behaviorError: document.getElementById('behaviorError'),
-                healthIssuesError: document.getElementById('healthIssuesError'),
-            };
+            const waterQualityInput = document.querySelector('input[name="water_quality"]');
+            const tankSizeInput = document.querySelector('input[name="tank_size"]');
+            const feedingInput = document.querySelector('input[name="feeding"]');
+            const behaviorInput = document.querySelector('input[name="behavior"]');
+            const healthIssuesInput = document.querySelector('input[name="health_issues"]');
+            
+            const priceError = document.getElementById('priceError');
+            const waterQualityError = document.getElementById('waterQualityError');
+            const tankSizeError = document.getElementById('tankSizeError');
+            const feedingError = document.getElementById('feedingError');
+            const behaviorError = document.getElementById('behaviorError');
+            const healthIssuesError = document.getElementById('healthIssuesError');
 
-            form.addEventListener('submit', function (event) {
+            const phRegex = /^[0-9]+(\.[0-9]+)?-?[0-9]*\s*pH$/i;
+            const tankSizeRegex = /^[0-9]+(\.[0-9]+)?\s*(gallons|liters)$/i;
+            
+            productForm.addEventListener('submit', function (event) {
                 let isValid = true;
-                
-                // Validate each field
-                if (productNameInput.value.trim() === "") {
-                    errors.productNameError.textContent = "Product name cannot be empty.";
+
+                // Validate price
+                if (Number(priceInput.value) < 1) {
+                    priceError.textContent = "Price must be at least 1.";
                     isValid = false;
+                } else {
+                    priceError.textContent = "";
                 }
-                if (priceInput.value.trim() === "" || isNaN(priceInput.value) || Number(priceInput.value) < 0) {
-                    errors.priceError.textContent = "Price must be a valid number.";
+
+                // Validate water quality (e.g., 7-8 pH)
+                if (!phRegex.test(waterQualityInput.value.trim())) {
+                    waterQualityError.textContent = "Please enter a valid water quality (e.g., 7-8 pH).";
                     isValid = false;
+                } else {
+                    waterQualityError.textContent = "";
                 }
-                if (stockInput.value.trim() === "" || isNaN(stockInput.value) || Number(stockInput.value) < 0) {
-                    errors.stockError.textContent = "Stock must be a valid number.";
+
+                // Validate tank size (e.g., 20 gallons or liters)
+                if (!tankSizeRegex.test(tankSizeInput.value.trim())) {
+                    tankSizeError.textContent = "Please enter a valid tank size (e.g., 20 gallons or 75 liters).";
                     isValid = false;
+                } else {
+                    tankSizeError.textContent = "";
                 }
-                if (descriptionInput.value.trim().length < 20) {
-                    errors.descriptionError.textContent = "Product description must be at least 20 characters.";
+
+                // Validate feeding, behavior, and health issues (minimum 10 characters)
+                if (feedingInput.value.trim().length < 10) {
+                    feedingError.textContent = "Feeding information must be at least 10 characters.";
                     isValid = false;
+                } else {
+                    feedingError.textContent = "";
                 }
-                // Fish care information validation
-                Object.keys(careInfoInputs).forEach(key => {
-                    if (careInfoInputs[key].value.trim() === "") {
-                        errors[`${key}Error`].textContent = `${key.replace('_', ' ')} is required.`;
-                        isValid = false;
-                    }
-                });
+
+                if (behaviorInput.value.trim().length < 10) {
+                    behaviorError.textContent = "Behavior description must be at least 10 characters.";
+                    isValid = false;
+                } else {
+                    behaviorError.textContent = "";
+                }
+
+                if (healthIssuesInput.value.trim().length < 10) {
+                    healthIssuesError.textContent = "Health issues description must be at least 10 characters.";
+                    isValid = false;
+                } else {
+                    healthIssuesError.textContent = "";
+                }
 
                 if (!isValid) {
                     event.preventDefault();
@@ -187,5 +186,4 @@
 
     <script src="{% static 'js/main.js' %}"></script>
 </body>
-
 </html>

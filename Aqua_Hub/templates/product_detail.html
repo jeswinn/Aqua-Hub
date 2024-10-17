@@ -28,18 +28,26 @@
                     <label for="quantity" class="form-label">Quantity:</label>
                     <form method="POST" action="{% url 'add_to_cart' product.id %}" id="cartForm">
                         {% csrf_token %}
-                        <input type="number" id="quantity" name="quantity" class="form-control text-center" min="1" max="{{ product.stock }}" value="1" style="width: 100px;"> <!-- Adjusted width -->
+                        <input type="number" id="quantity" name="quantity" class="form-control text-center" min="1" max="{{ product.stock }}" value="1" style="width: 100px;">
                         <div class="d-flex gap-3 mt-4">
                             <button type="submit" class="btn btn-primary btn-lg" id="addToCartBtn">Add to Cart</button>
                         </div>
                     </form>
                     <div id="error-message" class="text-danger mt-2" style="display: none;"></div> <!-- Error message -->
                 </div>
+                
+                <!-- Book Now Button Section -->
+                <div class="d-flex gap-3 mt-4">
+                    <form method="POST" action="{% url 'enter_address' product.id  %}" id="bookForm">
+                        {% csrf_token %}
+                        <input type="hidden" id="bookQuantity" name="quantity" value="1"> <!-- Hidden quantity field -->
+                        <button type="submit" class="btn btn-warning btn-lg" id="bookNowBtn">Book Now</button>
+                    </form>
+                </div>
+
                 {% else %}
                     <button class="btn btn-secondary btn-lg" disabled>Out of Stock</button>
                 {% endif %}
-
-                
 
                 <!-- Return Policy -->
                 <div class="my-4">
@@ -112,6 +120,7 @@
         const maxQuantity = parseInt(quantityInput.max); // Maximum stock
         const errorMessage = document.getElementById('error-message');
 
+        // Add to Cart form validation
         form.addEventListener('submit', function (event) {
             const selectedQuantity = parseInt(quantityInput.value);
             if (selectedQuantity > maxQuantity) {
@@ -120,6 +129,20 @@
                 event.preventDefault(); // Prevent form submission
             } else {
                 errorMessage.style.display = 'none'; // Hide the error message if input is valid
+            }
+        });
+
+        // Book Now button validation
+        const bookNowBtn = document.getElementById('bookNowBtn');
+        const bookQuantityInput = document.getElementById('bookQuantity');
+        bookNowBtn.addEventListener('click', function (event) {
+            const selectedQuantity = quantityInput.value;
+            if (!selectedQuantity || selectedQuantity < 1) {
+                errorMessage.textContent = "Please select a valid quantity before booking.";
+                errorMessage.style.display = 'block';
+                event.preventDefault();
+            } else {
+                bookQuantityInput.value = selectedQuantity; // Set the quantity in the hidden input for booking
             }
         });
     });

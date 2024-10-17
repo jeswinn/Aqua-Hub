@@ -22,6 +22,10 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
 from django.views.decorators.cache import never_cache   
+from django.contrib.auth.decorators import user_passes_test
+from django.core.exceptions import PermissionDenied
+from django.conf import settings
+
 
 
 
@@ -269,6 +273,47 @@ def approved_seller(request):
     else:
         return redirect('login')
     
+
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Seller
+
+@login_required
+def approve_seller(request, seller_id):
+    seller = get_object_or_404(Seller, id=seller_id)
+    seller.approved = True  # Approve the seller
+    seller.save()
+    messages.success(request, 'Seller approved successfully!')
+    return redirect('admin_approval_page')  # Redirect to approval page
+
+
+@login_required
+def reject_seller(request, seller_id):
+    seller = get_object_or_404(Seller, id=seller_id)
+
+    if request.method == 'POST':
+        reason = request.POST.get('reason')
+        
+        # Send rejection email
+        send_mail(
+            'Aqua Hub - Seller Registration Rejected',
+            f'Hello {seller.username},\n\nYour seller registration was rejected for the following reason:\n{reason}\n\nThank you for your interest in Aqua Hub.',
+            'aquahub837@gmail.com',  # Replace with your email
+            [seller.email],
+            fail_silently=False,
+        )
+
+        # Delete the seller record after rejection
+        seller.delete()
+
+        messages.success(request, 'Seller rejected and email sent!')
+        return redirect('approve')  # Redirect to the approval page
+
+
+
+    
 def remove_seller(request, seller_id):
     # Fetch the seller by id
     seller = get_object_or_404(Seller, id=seller_id)
@@ -339,22 +384,35 @@ def add_product(request):
 
 
 
+from django.db.models import Q  # For complex queries
 
+@never_cache
 def seller_product(request):
-    # Fetch the currently logged-in seller's ID from session
-    seller_id = request.session.get('seller_id')
+    if 'seller_id' in request.session:
+        # Fetch the currently logged-in seller's ID from session
+        seller_id = request.session.get('seller_id')
 
-    if not seller_id:
-        messages.error(request, "You must be logged in as a seller.")
-        return redirect('sellerdash')  # Redirect to seller login
+        if not seller_id:
+            messages.error(request, "You must be logged in as a seller.")
+            return redirect('sellerdash')  # Redirect to seller dashboard if not logged in
 
-    # Get the seller's details
-    seller = Seller.objects.get(id=seller_id)
+        # Get the seller's details
+        seller = Seller.objects.get(id=seller_id)
 
-    # Fetch all products added by the seller
-    products = Product.objects.filter(seller=seller)
+        # Fetch all products added by the seller
+        products = Product.objects.filter(seller=seller)
 
-    return render(request, 'sellerproduct.html', {'products': products})
+        # Check if there's a search query
+        query = request.GET.get('q')
+        if query:
+            products = products.filter(
+                Q(product_name__icontains=query) |
+                Q(description__icontains=query)
+            )
+
+        return render(request, 'sellerproduct.html', {'products': products})
+    else:
+        return redirect('slogin')
 
 
 def forgot_password(request):
@@ -480,11 +538,10 @@ def enable_product(request, product_id):
 
 @never_cache
 def product_list_view(request):
-    # Get the search query if available
+    # Get the search query, letter filter, and sort order if available
     query = request.GET.get('q')
-
-    # Get the selected letter for alphabetical sorting
     letter = request.GET.get('letter')
+    sort = request.GET.get('sort')  # Sorting order (price-asc or price-desc)
 
     # Fetch all approved and active products
     products = Product.objects.filter(is_active=True)
@@ -497,19 +554,27 @@ def product_list_view(request):
     if letter:
         products = products.filter(product_name__istartswith=letter)  # Case-insensitive filtering by first letter
 
+    # Sort products by price if sorting is selected
+    if sort == 'price-asc':
+        products = products.order_by('price')
+    elif sort == 'price-desc':
+        products = products.order_by('-price')
+
     # Set up pagination (e.g., 9 products per page)
     paginator = Paginator(products, 9)  # Show 9 products per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Pass the paginated products, search query, and selected letter to the template
+    # Pass paginated products, search query, letter, and sort option to the template
     context = {
         'products': page_obj,
-        'query': query,  # To retain the search query in the search bar
-        'letter': letter  # To retain the selected letter for alphabetical filtering
+        'query': query,  # Retain the search query in the search bar
+        'letter': letter,  # Retain the selected letter for alphabetical filtering
+        'sort': sort  # Retain the sort option in the sort dropdown
     }
 
     return render(request, 'products.html', context)
+
 
 
         
@@ -539,7 +604,7 @@ def add_to_cart(request, product_id):
     cart, created = Cart.objects.get_or_create(user=request.user)
 
     # Check if the product is already in the cart
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product, quantity=quantity)
     
     if not created:
         cart_item.quantity += quantity  # Update quantity if it already exists
@@ -624,6 +689,7 @@ def profile_view(request):
 
 def edit_seller_profile(request):
     # Check if seller is logged in by checking session
+    
     if 'seller_id' not in request.session:
         messages.error(request, 'You need to log in to access this page.')
         return redirect('slogin')  # Redirect to login page if not authenticated
@@ -654,3 +720,263 @@ def edit_seller_profile(request):
         'seller': seller
     }
     return render(request, 'seller_profile.html', context)
+
+
+
+def create_virtual_tank(request):
+    if 'height' in request.GET and 'width' in request.GET:
+        height = int(request.GET.get('height'))
+        width = int(request.GET.get('width'))
+        depth = int(request.GET.get('depth'))
+
+        # Create a new VirtualTank entry
+        VirtualTank.objects.create(user=request.user, height=height, width=width, depth=depth)
+
+        return redirect('virtual_tank_view')  # Redirect to the tank view or another page
+
+    return render(request, 'vtank.html')
+
+def view_virtual_tank(request):
+    # Get the latest virtual tank created by the user
+    virtual_tank = VirtualTank.objects.filter(user=request.user).order_by('-created_at').first()
+
+    context = {
+        'virtual_tank': virtual_tank
+    }
+    return render(request, 'view_virtual_tank.html', context)
+
+
+# List of all blog posts
+def blog_list(request):
+    blogs = BlogPost.objects.all().order_by('-created_at')
+    return render(request, 'blog_list.html', {'blogs': blogs})
+
+# Detail view for a single blog post
+def blog_detail(request, pk):
+    blog = get_object_or_404(BlogPost, pk=pk)
+    return render(request, 'blog_detail.html', {'blog': blog})
+
+# View for creating a new blog post (no forms used)
+
+@login_required
+def create_blog(request):
+    if request.method == 'POST':
+        print("dd")
+        title = request.POST.get('title')
+        print(title)
+        content=request.POST.get('content')
+        
+        allow_comments = request.POST.get('allow_comments') == 'on'  # Checkbox
+        image = request.FILES.get('image')
+
+        if title and content :
+            print("gg")
+            blog_post = BlogPost.objects.create(
+                title=title,
+                content=content,
+                author=request.user,
+                allow_comments=allow_comments,
+                image=image
+            )
+            blog_post.save()
+            return redirect('blog_list')  # Redirect to the list of blogs
+
+    return render(request, 'create_blog.html')
+
+@login_required
+def add_comment(request, blog_id):
+    if request.method == 'POST':
+        blog = get_object_or_404(BlogPost, id=blog_id)
+        content = request.POST.get('content')
+        if content:
+            comment = Comment(blog=blog, user=request.user, content=content)
+            comment.save()
+        return redirect('blog_detail', pk=blog_id)
+
+
+@login_required
+def my_blogs(request):
+    user_blogs = BlogPost.objects.filter(author=request.user)
+    return render(request, 'my_blogs.html', {'blogs': user_blogs})
+
+
+from django.shortcuts import redirect
+
+@login_required
+def edit_blog(request, blog_id):
+    blog = get_object_or_404(BlogPost, id=blog_id)
+
+    # Ensure that the logged-in user is the author of the blog post
+    if blog.author != request.user:
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        blog.title = request.POST.get('title')
+        blog.content = request.POST.get('content')
+
+        if 'image' in request.FILES:
+            blog.image = request.FILES['image']
+
+        blog.save()
+        return redirect('my_blogs')  # Redirect to 'myblogs' after editing
+
+    return render(request, 'edit_blog.html', {'blog': blog})
+
+@login_required
+def manage_users(request):
+    users = User.objects.all()  # Fetch all users
+
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        action = request.POST.get("action")
+        user = get_object_or_404(User, id=user_id)
+
+        if action == "block":
+            user.is_active = False
+            user.save()
+            # Send email to notify user
+            send_mail(
+                'Account Blocked',
+                'Your account has been blocked. Please contact support for further details.',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            messages.success(request, f"{user.username} has been blocked.")
+        elif action == "unblock":
+            user.is_active = True
+            user.save()
+            # Send email to notify user
+            send_mail(
+                'Account Unblocked',
+                'Your account has been unblocked. You can now log in again.',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            messages.success(request, f"{user.username} has been unblocked.")
+        
+        return redirect('manage_users')
+
+    return render(request, 'admin_users.html', {'users': users})
+
+
+
+@login_required
+def register_complaint(request):
+    if request.method == "POST":
+        seller_id = request.POST.get('seller_id')
+        subject = request.POST.get('subject')
+        description = request.POST.get('description')
+
+        try:
+            # Get the seller based on the selected seller ID
+            seller = Seller.objects.get(id=seller_id, approved=True)
+        except Seller.DoesNotExist:
+            messages.error(request, "Selected seller is not valid.")
+            return redirect('register_complaint')
+
+        # Create and save the complaint
+        complaint = Complaint.objects.create(
+            user=request.user,
+            seller=seller,
+            subject=subject,
+            description=description
+        )
+        messages.success(request, "Your complaint has been registered.")
+        return redirect('register_complaint')
+
+    # Fetch all approved sellers
+    approved_sellers = Seller.objects.filter(approved=True)
+    return render(request, 'register_complaint.html', {'approved_sellers': approved_sellers})
+
+
+# @login_required(login_url='slogin')
+def view_complaints(request):
+    # Ensure the seller is logged in
+    if 'seller_id' in request.session:
+        seller_id = request.session.get('seller_id')
+
+        # Fetch complaints related to the logged-in seller
+        complaints = Complaint.objects.filter(seller__id=seller_id).order_by('-created_at')
+
+        return render(request, 'seller_complaints.html', {'complaints': complaints})
+    else:
+        return redirect('slogin') 
+    
+
+    
+
+@login_required
+def enter_address(request, product_id):
+    product = Product.objects.get(id=product_id)
+    quantity = request.POST.get('quantity', 1)
+    print(quantity)
+    if request.method == 'POST':
+        # Collect form data
+        full_name = request.POST.get('full_name')
+        contact1 = request.POST.get('contact1')
+        contact2 = request.POST.get('contact2')
+        locality = request.POST.get('locality')
+        address = request.POST.get('address')
+        landmark = request.POST.get('landmark')
+        city = request.POST.get('city')
+        state = request.POST.get('state')
+        pincode = request.POST.get('pincode')
+        save_address = request.POST.get('save_address')  # Check if the user wants to save the address
+
+        # Validate and save the address
+        if full_name and contact1 and address and city and state and pincode:
+            print("hh")
+            # Check if the "Save this address" checkbox was checked
+            if save_address:
+                print("nn")
+                # Save the address to the UserAddress model
+                address1=UserAddress.objects.create(
+                    user=request.user,
+                    full_name=full_name,
+                    contact1=contact1,
+                    contact2=contact2,
+                    locality=locality,
+                    address=address,
+                    landmark=landmark,
+                    city=city,
+                    state=state,
+                    pincode=pincode,
+                    saved=True  # Mark the address as saved
+                )
+                address1.save()
+                messages.success(request, "Address saved successfully!")
+                print("jj")
+
+            # After address submission, redirect to the order confirmation page (or the next step)
+            return redirect('book_now', product_id=product.id, quantity=quantity)
+
+        else:
+            messages.error(request, "Please fill in all the required fields.")
+
+    # Render the address form
+    return render(request, 'address.html', {'product': product, 'quantity': quantity})
+
+
+
+
+def book_now(request, product_id,quantity):
+    product = get_object_or_404(Product, id=product_id)
+    # quantity = int(request.POST.get('quantity', 1))  # Get the selected quantity from POST data
+    
+     # Calculate total price
+    total_price = product.price * quantity
+
+    # Apply delivery charge if total_price is greater than 499
+    delivery_charge = 40 if total_price < 499 else 0
+    final_price = total_price + delivery_charge
+
+    return render(request, 'book_now.html', {
+        'product': product,
+        'quantity': quantity,
+        'total_price': total_price,
+        'delivery_charge': delivery_charge,
+        'final_price': final_price,
+    })
+

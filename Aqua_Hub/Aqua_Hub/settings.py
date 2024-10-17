@@ -79,7 +79,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.user.user_details',          
 )
 
-LOGIN_REDIRECT_URL = 'userhome'
+LOGIN_REDIRECT_URL = 'product_list'
 LOGOUT_REDIRECT_URL = '/'
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'http://127.0.0.1:8000/oauth/complete/google-oauth2/'

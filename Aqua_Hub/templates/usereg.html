@@ -1,15 +1,15 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Registration - Aqua Hub</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
-            background: url('{% static 'img/sellerbg.jpg' %}') no-repeat center center fixed;
-            background-size: cover;
+            font-family: 'Poppins', sans-serif;
+            background-color: #e8f5e9; /* Light green background */
             margin: 0;
             padding: 0;
             height: 100vh;
@@ -18,23 +18,22 @@
             align-items: center;    
         }
         .form-container {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
             width: 100%;
             max-width: 450px;
         }
         h2 {
             text-align: center;
-            color: #0077b6;
+            color: #28a745; /* Green color for the heading */
             margin-bottom: 20px;
             font-size: 24px;
         }
         label {
             font-size: 14px;
-            color: #ffffff;
+            color: #333; /* Darker text color for better contrast */
             margin-bottom: 5px;
             display: block;
         }
@@ -47,10 +46,10 @@
             width: 100%;
             padding: 10px;
             margin-bottom: 5px;
-            border: none;
+            border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-            background: rgba(255, 255, 255, 0.8);
+            background: #fff; /* White background for inputs */
         }
         .form-group {
             margin-bottom: 15px;
@@ -58,7 +57,7 @@
         button {
             width: 100%;
             padding: 12px;
-            background-color: #0077b6;
+            background-color: #28a745; /* Green button */
             color: white;
             border: none;
             border-radius: 5px;
@@ -67,18 +66,12 @@
             transition: background-color 0.3s ease;
         }
         button:hover {
-            background-color: #005f87;
+            background-color: #218838; /* Darker green on hover */
         }
         .error-message {
-            color: #e63946;
+            color: #e63946; /* Error message color */
             font-size: 12px;
             margin-bottom: 10px;
-        }
-        .success {
-            border: 1px solid green;
-        }
-        .error {
-            border: 1px solid #e63946;
         }
     </style>
     <script>
@@ -90,8 +83,9 @@
             usernameInput.parentNode.insertBefore(usernameError, usernameInput.nextSibling);
 
             usernameInput.addEventListener('input', function () {
-                if (!isNaN(usernameInput.value.charAt(0))) {
-                    usernameError.textContent = 'Username cannot start with a digit.';
+                const usernameRegex = /^[A-Za-z0-9]+$/; // Only alphanumeric characters allowed
+                if (!usernameRegex.test(usernameInput.value)) {
+                    usernameError.textContent = 'Username cannot contain special characters or spaces.';
                     usernameInput.classList.add('error');
                 } else {
                     usernameError.textContent = '';
@@ -99,7 +93,7 @@
                 }
             });
 
-            // Password length validation
+            // Password validation
             const passwordInput = document.getElementById('password');
             const passwordError = document.createElement('div');
             passwordError.className = 'error-message';
@@ -129,7 +123,6 @@
                     passwordInput.classList.remove('error');
                 }
             });
-            
 
             // Password match validation
             const confirmPasswordInput = document.getElementById('confirm-password');
@@ -154,8 +147,9 @@
             phoneInput.parentNode.insertBefore(phoneError, phoneInput.nextSibling);
 
             phoneInput.addEventListener('input', function () {
-                if (!/^\d{10}$/.test(phoneInput.value)) {
-                    phoneError.textContent = 'Phone number must be 10 digits.';
+                const phoneRegex = /^[6-9]\d{9}$/; // Starts with 6-9 and followed by 9 digits
+                if (!phoneRegex.test(phoneInput.value)) {
+                    phoneError.textContent = 'Phone number must be 10 digits and start with 6-9.';
                     phoneInput.classList.add('error');
                 } else {
                     phoneError.textContent = '';
@@ -168,23 +162,38 @@
             const emailError = document.createElement('div');
             emailError.className = 'error-message';
             emailInput.parentNode.insertBefore(emailError, emailInput.nextSibling);
-            
+
             emailInput.addEventListener('input', function () {
-                // Updated regex: No numbers allowed, valid email format, and supports more top-level domains
                 const emailRegex = /^[^\d][a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@[a-zA-Z]+\.[a-zA-Z]{2,}$/;
-            
                 if (!emailRegex.test(emailInput.value)) {
-                    emailError.textContent = 'Invalid email.must contain "@" and have a valid domain.';
+                    emailError.textContent = 'Invalid email. Must contain "@" and have a valid domain.';
                     emailInput.classList.add('error');
                 } else {
                     emailError.textContent = '';
                     emailInput.classList.remove('error');
                 }
             });
-            
+
+            // Address validation
+            const addressInput = document.getElementById('address');
+            const addressError = document.createElement('div');
+            addressError.className = 'error-message';
+            addressInput.parentNode.insertBefore(addressError, addressInput.nextSibling);
+
+            addressInput.addEventListener('input', function () {
+                const pinRegex = /\b\d{6}\b/; // Check if there’s a 6-digit pin in the address
+                if (!pinRegex.test(addressInput.value)) {
+                    addressError.textContent = 'Address must contain a 6-digit pin code.';
+                    addressInput.classList.add('error');
+                } else {
+                    addressError.textContent = '';
+                    addressInput.classList.remove('error');
+                }
+            });
         });
     </script>
 </head>
+
 <body>
     <div class="form-container">
         <h2>User Registration</h2>
@@ -219,4 +228,5 @@
         </form>
     </div>
 </body>
+
 </html>

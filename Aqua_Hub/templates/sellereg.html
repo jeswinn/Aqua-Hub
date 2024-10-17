@@ -8,88 +8,111 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background: url('{% static 'img/sellerbg.jpg' %}') no-repeat center center fixed;
-            background-size: cover;
+            background-color: #e0f7e5; /* Light green background */
             margin: 0;
             padding: 0;
-            height: 100vh;
+            height: auto;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Align the form to start from the top */
+            padding-top: 50px; /* Adjust padding to make the top visible */
         }
         .form-container {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 30px;
+            background: rgba(255, 255, 255, 0.8); /* Slightly opaque white */
+            padding: 40px;
             border-radius: 15px;
-            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             box-sizing: border-box;
+            margin-bottom: 50px; /* Extra margin to avoid the bottom getting too close */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+
+        .form-container:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
         h2 {
             text-align: center;
-            color: #002342;
+            color: #0077b6;
             margin-bottom: 20px;
-            font-size: 24px;
+            font-size: 28px;
         }
+
         label {
-            font-size: 14px;
-            color: #ffffff;
-            margin-bottom: 5px;
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 8px;
             display: block;
         }
+
         input[type="text"],
-        input[type="file"],
         input[type="email"],
         input[type="tel"],
         input[type="password"],
+        input[type="file"],
         textarea,
         select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin-bottom: 15px;
-            border: none;
+            border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-            background: rgba(255, 255, 255, 0.8);
+            background: #f9f9f9;
             box-sizing: border-box;
+            transition: border-color 0.3s ease;
         }
-        textarea {
-            resize: vertical;
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="password"]:focus,
+        input[type="file"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #28a745;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
+
         button {
             width: 100%;
             padding: 12px;
-            background-color: #0077b6;
+            background-color: #28a745; /* Green button */
             color: white;
             border: none;
             border-radius: 5px;
             font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
+
         button:hover {
-            background-color: #005f87;
+            background-color: #218838; /* Darker green on hover */
+            transform: translateY(-2px);
         }
+
         .error-message {
             color: #e63946;
             font-size: 12px;
             margin-top: -10px;
             margin-bottom: 10px;
         }
-        .success {
-            border: 1px solid green;
+
+        .form-group {
+            margin-bottom: 20px;
         }
-        .error {
-            border: 1px solid #e63946;
-        }
+
         .terms {
             display: flex;
             align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .terms input {
+            margin-right: 8px;
         }
     </style>
 
@@ -102,8 +125,9 @@
             usernameInput.parentNode.insertBefore(usernameError, usernameInput.nextSibling);
 
             usernameInput.addEventListener('input', function () {
-                if (!isNaN(usernameInput.value.charAt(0))) {
-                    usernameError.textContent = 'Username cannot start with a digit.';
+                const usernameRegex = /^[A-Za-z0-9]+$/; // Only alphanumeric characters allowed
+                if (!usernameRegex.test(usernameInput.value)) {
+                    usernameError.textContent = 'Username cannot contain special characters or spaces.';
                     usernameInput.classList.add('error');
                 } else {
                     usernameError.textContent = '';
@@ -134,8 +158,8 @@
             phoneInput.parentNode.insertBefore(phoneError, phoneInput.nextSibling);
 
             phoneInput.addEventListener('input', function () {
-                if (!/^\d{10}$/.test(phoneInput.value)) {
-                    phoneError.textContent = 'Phone number must be 10 digits.';
+                if (!/^[6-9]\d{9}$/.test(phoneInput.value)) {
+                    phoneError.textContent = 'Phone number must be 10 digits and start with 6-9.';
                     phoneInput.classList.add('error');
                 } else {
                     phoneError.textContent = '';
@@ -162,20 +186,21 @@
 
             // Email validation
             const emailInput = document.getElementById('email');
-            const emailError = document.createElement('div');
-            emailError.className = 'error-message';
-            emailInput.parentNode.insertBefore(emailError, emailInput.nextSibling);
+const emailError = document.createElement('div');
+emailError.className = 'error-message';
+emailInput.parentNode.insertBefore(emailError, emailInput.nextSibling);
 
-            emailInput.addEventListener('input', function () {
-                const emailRegex = /^[^\d][a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+$/;
-                if (!emailRegex.test(emailInput.value)) {
-                    emailError.textContent = 'Invalid email. No numbers allowed, must contain "@"';
-                    emailInput.classList.add('error');
-                } else {
-                    emailError.textContent = '';
-                    emailInput.classList.remove('error');
-                }
-            });
+emailInput.addEventListener('input', function () {
+    // Updated regex: allows numbers, but the first character can't be a digit
+    const emailRegex = /^[^\d][\w.+-]+@[a-zA-Z]+\.[a-zA-Z]+$/;
+    if (!emailRegex.test(emailInput.value)) {
+        emailError.textContent = 'Invalid email. First character cannot be a number and must contain "@"';
+        emailInput.classList.add('error');
+    } else {
+        emailError.textContent = '';
+        emailInput.classList.remove('error');   
+    }
+});
 
             // Licensing document validation
             const licenseInput = document.getElementById('licensing-document');

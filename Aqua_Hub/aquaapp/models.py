@@ -79,3 +79,69 @@ class CartItem(models.Model):
     
     def get_total_price(self):
         return self.quantity * self.product.price
+
+
+
+class VirtualTank(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    height = models.IntegerField()
+    width = models.IntegerField()
+    depth = models.IntegerField(blank=True,null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Tank ({self.height}x{self.width}x{self.depth})"
+
+
+class BlogPost(models.Model):
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)  # Link to the user who created the post
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    allow_comments = models.BooleanField(default=True)  # To enable/disable comments
+    image = models.ImageField(upload_to='blog_images/', blank=True, null=True)  # Image field
+
+    def __str__(self):
+        return self.title
+    
+class Comment(models.Model):
+    blog = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.blog.title}"
+    
+
+class Complaint(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # User who registered the complaint
+    seller = models.ForeignKey(Seller, on_delete=models.CASCADE)  # Seller the complaint is against
+    subject = models.CharField(max_length=255)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Complaint by {self.user.username} against {self.seller.shop_name}"
+    
+
+
+
+class UserAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')  # Link to the user
+    full_name = models.CharField(max_length=255)
+    contact1 = models.CharField(max_length=10)  # Primary contact number
+    contact2 = models.CharField(max_length=10, blank=True, null=True)  # Alternative contact number
+    locality = models.CharField(max_length=255)
+    address = models.TextField()  # Full address
+    landmark = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=6)
+    saved = models.BooleanField(default=False)  # To mark whether the address is saved
+
+    def __str__(self):
+        return f"{self.full_name} - {self.city}, {self.state}"
+
+

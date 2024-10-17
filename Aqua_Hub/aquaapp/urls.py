@@ -51,6 +51,21 @@ urlpatterns = [
       path('enable_product/<int:product_id>/',enable_product, name='enable_product'),
       path('profile/', profile_view, name='Profile'),
       path('sprofile/',edit_seller_profile, name='sprofile'),
+      path('virtual-tank/', view_virtual_tank, name='virtual_tank_view'),
+      path('create-tank/', create_virtual_tank, name='create_virtual_tank'),
+      path('blogs/', blog_list, name='blog_list'),
+      path('blogs/<int:pk>/', blog_detail, name='blog_detail'),
+      path('blogs/create/', create_blog, name='create_blog'),
+      path('blog/<int:blog_id>/comment/', add_comment, name='add_comment'),
+      path('myblogs/', my_blogs, name='my_blogs'),
+      path('blogs/<int:blog_id>/edit/', edit_blog, name='edit_blog'),
+      path('reject_seller/<int:seller_id>/', reject_seller, name='reject_seller'),
+      path('manage-users/', manage_users, name='manage_users'),
+      path('complaints/register/', register_complaint, name='register_complaint'),
+      path('view-complaints/', view_complaints, name='view_complaints'),
+      path('product/<int:product_id>/book-now/<int:quantity>', book_now, name='book_now'),
+      path('product/<int:product_id>/enter-address/', enter_address, name='enter_address'),
+
 
 
     #   path('blog',blog_view,name='blog'),

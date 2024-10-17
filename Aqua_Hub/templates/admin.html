@@ -41,10 +41,10 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto py-0">
-                <a href="dashboard.html" class="nav-item nav-link">DELIVERY</a>
+                <a href="{% url 'manage_users' %}" class="nav-item nav-link">USERS</a>
                 <a href="{% url 'sellerappr' %}" class="nav-item nav-link a">SELLERS</a>
                 <a href="orders.html" class="nav-item nav-link">ORDERS</a>
-                <a href="reviews.html" class="nav-item nav-link">Reviews</a>
+                <a href="reviews.html" class="nav-item nav-link">Complaints</a>
                 <a href="{% url 'logout' %}" class="nav-item nav-link">Logout</a>
             </div>
         </div>
