@@ -1,5 +1,5 @@
 from urllib import request
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -25,6 +25,8 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
+import razorpay
+from django.views.decorators.csrf import csrf_exempt
 
 
 
@@ -746,10 +748,16 @@ def view_virtual_tank(request):
     return render(request, 'view_virtual_tank.html', context)
 
 
-# List of all blog posts
 def blog_list(request):
-    blogs = BlogPost.objects.all().order_by('-created_at')
-    return render(request, 'blog_list.html', {'blogs': blogs})
+    query = request.GET.get('q')  # Get the search query from the URL parameters
+    if query:
+        # Filter blogs based on the search query in the title
+        blogs = BlogPost.objects.filter(Q(title__icontains=query)).order_by('-created_at')
+    else:
+        # If no search query, display all blogs
+        blogs = BlogPost.objects.all().order_by('-created_at')
+
+    return render(request, 'blog_list.html', {'blogs': blogs, 'query': query})
 
 # Detail view for a single blog post
 def blog_detail(request, pk):
@@ -927,10 +935,10 @@ def enter_address(request, product_id):
 
         # Validate and save the address
         if full_name and contact1 and address and city and state and pincode:
-            print("hh")
+            
             # Check if the "Save this address" checkbox was checked
             if save_address:
-                print("nn")
+                
                 # Save the address to the UserAddress model
                 address1=UserAddress.objects.create(
                     user=request.user,
@@ -980,3 +988,141 @@ def book_now(request, product_id,quantity):
         'final_price': final_price,
     })
 
+
+@login_required
+def create_order(request, product_id):
+    product = Product.objects.get(id=product_id)
+    quantity = int(request.POST.get('quantity', 1))
+
+    # Check if sufficient stock is available
+    if product.stock < quantity:
+        messages.error(request, "Insufficient stock available!")
+        return redirect('product_detail', product_id=product_id)
+
+    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    
+    # Fetch user's saved address (you can customize this to allow address selection)
+    user_address = UserAddress.objects.filter(user=request.user).first()
+
+    total_price = product.price * quantity
+
+    # Apply delivery charge if total_price is greater than 499
+    delivery_charge = 40 if total_price < 499 else 0
+    final_price = total_price + delivery_charge
+
+    # Create the order in the database
+    order = Order.objects.create(
+        user=request.user,
+        product=product,
+        quantity=quantity,
+        total_price=final_price,
+        address=user_address
+    )
+
+    # Create a Razorpay order
+    razorpay_order = client.order.create({
+        'amount': int(final_price * 100),  # Amount in paisa (INR)
+        'currency': 'INR',
+        'payment_capture': '1'
+    })
+
+    # Store the Razorpay order ID
+    order.payment_id = razorpay_order['id']
+    order.save()
+
+    context = {
+        'order': order,
+        'razorpay_order_id': razorpay_order['id'],
+        'razorpay_key_id': settings.RAZORPAY_KEY_ID,
+        'final_price': final_price,
+    }
+
+    return render(request, 'order_summary.html', context)
+
+
+
+
+@csrf_exempt 
+def payment_handler(request):
+    if request.method == 'POST':
+        # Extract the payment information from Razorpay's response
+        payment_id = request.POST.get('razorpay_payment_id')
+        order_id = request.POST.get('razorpay_order_id')
+        signature = request.POST.get('razorpay_signature')
+
+        # Initialize the Razorpay client for payment verification
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        try:
+            # Verify the payment signature to ensure the request is valid
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': order_id,
+                'razorpay_payment_id': payment_id,
+                'razorpay_signature': signature
+            })
+
+            # Fetch the order using the payment ID
+            order = Order.objects.get(payment_id=order_id)
+
+            # Update the order payment status to 'Completed'
+            order.payment_status = 'Completed'
+            order.save()
+
+            # Reduce stock for the ordered product
+            product = order.product
+            if product.stock >= order.quantity:  # Check if stock is available
+                product.stock -= order.quantity
+                product.save()
+            else:
+                # If stock is insufficient, you may want to handle this scenario
+                order.payment_status = 'Failed'
+                order.save()
+                return render(request, 'payment_failed.html', {'order': order, 'error': 'Insufficient stock to fulfill the order'})
+
+            # Payment success, return success response
+            return render(request, 'payment_success.html', {'order': order})
+
+        except razorpay.errors.SignatureVerificationError as e:
+            # Handle payment verification failure
+            order = Order.objects.get(payment_id=order_id)
+            order.payment_status = 'Failed'
+            order.save()
+
+            # Log the error and show a failure page to the user
+            return render(request, 'payment_failed.html', {'order': order, 'error': 'Payment verification failed. Please try again.'})
+    
+    return HttpResponseBadRequest("Invalid request method")
+
+        
+
+@login_required
+def completed_orders(request):
+    # Filter only orders that have been delivered
+    completed_orders = Order.objects.filter(user=request.user, payment_status='Completed').order_by('-created_at')
+    return render(request, 'completed_orders.html', {'completed_orders': completed_orders})
+
+
+
+
+def seller_orders(request):
+    # Assuming the seller's ID is stored in the session upon login
+    seller_id = request.session.get('seller_id')
+
+    # Fetch the seller's details using the seller ID
+    seller = Seller.objects.get(id=seller_id)
+
+    # Get all products added by this seller
+    products = Product.objects.filter(seller=seller)
+
+    # Fetch orders related to these products
+    orders = Order.objects.filter(product__in=products).order_by('-created_at')
+
+    return render(request, 'seller_orders.html', {'orders': orders})
+
+
+@login_required # This decorator ensures that only admin users can access the page
+def admin_all_orders(request):
+    # Fetch all orders
+    orders = Order.objects.all().order_by('-created_at')  # Assuming 'created_at' is a field in Order model
+
+    return render(request, 'admin_orders.html', {'orders': orders})

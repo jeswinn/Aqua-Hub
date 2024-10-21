@@ -25,12 +25,14 @@
 
                 <!-- Final Price -->
                 <p class="text-danger">Final Price: ₹{{ final_price }}</p>
+                
 
-                <form method="POST" action="{% url 'enter_address' product.id %}">
+                <form method="POST" action="{% url 'order_now' product.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="quantity" value="{{ quantity }}">
                     <button type="submit" class="btn btn-success btn-lg">PROCEED TO PAYMENT</button>
                 </form>
+
             </div>
         </div>
     </div>

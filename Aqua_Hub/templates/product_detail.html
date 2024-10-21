@@ -40,7 +40,7 @@
                 <div class="d-flex gap-3 mt-4">
                     <form method="POST" action="{% url 'enter_address' product.id  %}" id="bookForm">
                         {% csrf_token %}
-                        <input type="hidden" id="bookQuantity" name="quantity" value="1"> <!-- Hidden quantity field -->
+                        <input type="hidden" id="bookQuantity" name="quantity" value="1" min="1" max="{{ product.stock}}"> <!-- Hidden quantity field -->
                         <button type="submit" class="btn btn-warning btn-lg" id="bookNowBtn">Book Now</button>
                     </form>
                 </div>
@@ -136,12 +136,13 @@
         const bookNowBtn = document.getElementById('bookNowBtn');
         const bookQuantityInput = document.getElementById('bookQuantity');
         bookNowBtn.addEventListener('click', function (event) {
-            const selectedQuantity = quantityInput.value;
-            if (!selectedQuantity || selectedQuantity < 1) {
-                errorMessage.textContent = "Please select a valid quantity before booking.";
+            const selectedQuantity = parseInt(quantityInput.value);
+            if (!selectedQuantity || selectedQuantity < 1 || selectedQuantity > maxQuantity) {
+                errorMessage.textContent = `Please select a valid quantity between 1 and ${maxQuantity}.`;
                 errorMessage.style.display = 'block';
                 event.preventDefault();
             } else {
+                errorMessage.style.display = 'none'; // Clear error message
                 bookQuantityInput.value = selectedQuantity; // Set the quantity in the hidden input for booking
             }
         });

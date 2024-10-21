@@ -43,7 +43,7 @@
             <div class="navbar-nav ms-auto py-0">
                 <a href="{% url 'manage_users' %}" class="nav-item nav-link">USERS</a>
                 <a href="{% url 'sellerappr' %}" class="nav-item nav-link a">SELLERS</a>
-                <a href="orders.html" class="nav-item nav-link">ORDERS</a>
+                <a href="{% url 'admin_all_orders' %}" class="nav-item nav-link">ORDERS</a>
                 <a href="reviews.html" class="nav-item nav-link">Complaints</a>
                 <a href="{% url 'logout' %}" class="nav-item nav-link">Logout</a>
             </div>

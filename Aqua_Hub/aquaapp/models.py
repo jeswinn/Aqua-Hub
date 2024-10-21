@@ -143,5 +143,28 @@ class UserAddress(models.Model):
 
     def __str__(self):
         return f"{self.full_name} - {self.city}, {self.state}"
+    
+
+
+class Order(models.Model):
+    STATUS_CHOICES = (
+        ('Confirmed', 'Confirmed'),
+        ('Shipped', 'Shipped'),
+        ('Delivered', 'Delivered'),
+        ('Cancelled', 'Cancelled'),
+    )
+     
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # User placing the order
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)  # Product being ordered
+    quantity = models.PositiveIntegerField()  # Quantity of the product
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)  # Total price of the order
+    address = models.ForeignKey(UserAddress, on_delete=models.SET_NULL, null=True)  # Shipping address
+    payment_id = models.CharField(max_length=100, blank=True, null=True)  # Razorpay Payment ID
+    payment_status = models.CharField(max_length=50, default='Pending')  # Payment status (Pending, Completed, Failed)
+    order_status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Confirmed')
+    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp of the order creation
+
+    def __str__(self):
+        return f"Order {self.id} - {self.user.username} - {self.payment_status}"
 
 
