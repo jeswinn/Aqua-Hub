@@ -28,7 +28,13 @@
                     <td>{{ order.quantity }}</td>
                     <td>₹{{ order.total_price }}</td>
                     <td>{{ order.created_at|date:"F j, Y" }}</td>
-                    <td>{{ order.delivery_address }}</td>
+                    <td>{{ order.address.full_name }}
+                        {{ order.address.address }}
+                        {{ order.address.pincode }}
+                        {{ order.address.contact1 }}
+                        {{ order.address.contact2 }}
+
+                    </td>
                     <td>
                         <span class="badge bg-success">Order Confirmed</span>
                     </td>

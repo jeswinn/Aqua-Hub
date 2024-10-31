@@ -38,7 +38,7 @@
                 
                 <!-- Book Now Button Section -->
                 <div class="d-flex gap-3 mt-4">
-                    <form method="POST" action="{% url 'enter_address' product.id  %}" id="bookForm">
+                    <form method="POST" action="{% url 'select_address' product.id  %}" id="bookForm">
                         {% csrf_token %}
                         <input type="hidden" id="bookQuantity" name="quantity" value="1" min="1" max="{{ product.stock}}"> <!-- Hidden quantity field -->
                         <button type="submit" class="btn btn-warning btn-lg" id="bookNowBtn">Book Now</button>

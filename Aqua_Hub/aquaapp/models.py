@@ -120,6 +120,7 @@ class Complaint(models.Model):
     seller = models.ForeignKey(Seller, on_delete=models.CASCADE)  # Seller the complaint is against
     subject = models.CharField(max_length=255)
     description = models.TextField()
+    payment_id = models.CharField(max_length=255, blank=True, null=True)  # Added payment ID field
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

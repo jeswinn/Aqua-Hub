@@ -64,12 +64,14 @@ urlpatterns = [
       path('complaints/register/', register_complaint, name='register_complaint'),
       path('view-complaints/', view_complaints, name='view_complaints'),
       path('product/<int:product_id>/book-now/<int:quantity>', book_now, name='book_now'),
-      path('product/<int:product_id>/enter-address/', enter_address, name='enter_address'),
+      path('product/<int:product_id>/enter-address/', add_new_address, name='add_new_address'),
       path('product/<int:product_id>/book-now/', create_order, name='order_now'),
       path('payment-handler/', payment_handler, name='payment_handler'),
       path('completed-orders/', completed_orders, name='completed_orders'),
       path('seller/orders/', seller_orders, name='seller_orders'),
       path('admin_orders/', admin_all_orders, name='admin_all_orders'),
+      path('product/<int:product_id>/select-address/', select_address, name='select_address'),
+       path('reply-complaint/<int:complaint_id>/', reply_complaint, name='reply_complaint'),
       
 
 

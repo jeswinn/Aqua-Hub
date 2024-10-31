@@ -16,9 +16,7 @@
 
                 <!-- Product Image -->
                 <div class="col-md-4">
-                    
                     <div class="product-image-wrapper">
-                        
                         <img src="{{ item.product.image.url }}" class="img-fluid rounded hover-effect" alt="{{ item.product.product_name }}" style="max-height: 300px; object-fit: cover; width: 100%;">
                     </div>
                 </div>
@@ -28,8 +26,13 @@
                     <div>
                         <h5 class="card-title">{{ item.product.product_name }}</h5>
                         <p class="card-text">Price: ₹{{ item.product.price }}</p>
-                        <p class="card-text">Quantity: {{ item.quantity }}</p>
-                        <p class="card-text">Total: ₹{{ item.get_total_price }}</p> <!-- Total Price for the item -->
+                        <!-- Quantity Control -->
+                        <div class="d-flex align-items-center my-2">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="decreaseQuantity({{ item.id }}, {{ item.product.price }})">-</button>
+                            <input type="text" id="quantity-{{ item.id }}" class="form-control mx-2 text-center" style="width: 60px;" value="{{ item.quantity }}" readonly>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="increaseQuantity({{ item.id }}, {{ item.product.price }}, {{ item.product.stock }})">+</button>
+                        </div>
+                        <p class="card-text">Total: ₹<span id="total-price-{{ item.id }}">{{ item.get_total_price }}</span></p>
                     </div>
 
                     <!-- Remove Button -->
@@ -50,25 +53,52 @@
     <!-- Cart Total and Checkout -->
     {% if cart_items %}
     <div class="d-flex justify-content-between align-items-center mt-4">
-        <h4>Total: ₹{{ total_price }}</h4> <!-- Overall total price -->
+        <h4>Total: ₹<span id="overall-total">{{ total_price }}</span></h4>
         <a href="#" class="btn btn-success btn-lg">Proceed to Checkout</a>
     </div>
     {% endif %}
 </div>
 
-<!-- JavaScript for Auto-Reload on Back Button -->
+<!-- JavaScript for Quantity Update with Stock Check -->
 <script>
-    window.addEventListener('pageshow', function(event) {
-        // If the page was loaded from cache, it will have persisted = true.
-        if (event.persisted) {
-            window.location.reload(); // Force reload the page.
+    function increaseQuantity(itemId, price, stock) {
+        let quantityInput = document.getElementById(`quantity-${itemId}`);
+        let quantity = parseInt(quantityInput.value);
+
+        // Check if adding one more would exceed stock
+        if (quantity + 1 > stock) {
+            alert("This item cannot be added in more quantity as it exceeds available stock.");
+        } else {
+            quantityInput.value = quantity + 1;
+            updateTotal(itemId, price);
         }
-    });
+    }
+
+    function decreaseQuantity(itemId, price) {
+        let quantityInput = document.getElementById(`quantity-${itemId}`);
+        let quantity = parseInt(quantityInput.value);
+        if (quantity > 1) {
+            quantityInput.value = quantity - 1;
+            updateTotal(itemId, price);
+        }
+    }
+
+    function updateTotal(itemId, price) {
+        let quantity = parseInt(document.getElementById(`quantity-${itemId}`).value);
+        let itemTotal = quantity * price;
+        document.getElementById(`total-price-${itemId}`).innerText = itemTotal;
+
+        // Update overall total
+        let total = 0;
+        {% for item in cart_items %}
+        total += parseInt(document.getElementById(`quantity-{{ item.id }}`).value) * {{ item.product.price }};
+        {% endfor %}
+        document.getElementById('overall-total').innerText = total;
+    }
 </script>
 
 <!-- Custom Styles -->
 <style>
-    /* Styling for cart items */
     .cart-item {
         border: 1px solid #e0e0e0;
         transition: box-shadow 0.3s ease;
@@ -89,7 +119,6 @@
         transform: scale(1.05);
     }
 
-    /* Styling for item number */
     .item-number-circle {
         position: absolute;
         top: 10px;
@@ -106,7 +135,6 @@
         font-size: 16px;
     }
 
-    /* Custom button and text styling */
     .cart-item .card-title {
         font-weight: 600;
         color: #222;
@@ -117,7 +145,6 @@
         color: #555;
     }
 
-    /* Aligning buttons for quantity control */
     .cart-item .d-flex.align-items-center button {
         width: 40px;
         height: 40px;

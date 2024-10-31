@@ -874,6 +874,7 @@ def manage_users(request):
 def register_complaint(request):
     if request.method == "POST":
         seller_id = request.POST.get('seller_id')
+        payment_id = request.POST.get('payment_id')  # Get the order ID from the form
         subject = request.POST.get('subject')
         description = request.POST.get('description')
 
@@ -884,12 +885,18 @@ def register_complaint(request):
             messages.error(request, "Selected seller is not valid.")
             return redirect('register_complaint')
 
+        # Ensure that the order ID is not empty
+        if not payment_id:
+            messages.error(request, "Order ID cannot be empty.")
+            return redirect('register_complaint')
+
         # Create and save the complaint
         complaint = Complaint.objects.create(
             user=request.user,
             seller=seller,
             subject=subject,
-            description=description
+            description=description,
+            payment_id=payment_id  # Save the order ID in the complaint
         )
         messages.success(request, "Your complaint has been registered.")
         return redirect('register_complaint')
@@ -897,6 +904,7 @@ def register_complaint(request):
     # Fetch all approved sellers
     approved_sellers = Seller.objects.filter(approved=True)
     return render(request, 'register_complaint.html', {'approved_sellers': approved_sellers})
+
 
 
 # @login_required(login_url='slogin')
@@ -916,7 +924,7 @@ def view_complaints(request):
     
 
 @login_required
-def enter_address(request, product_id):
+def add_new_address(request, product_id):
     product = Product.objects.get(id=product_id)
     quantity = request.POST.get('quantity', 1)
     print(quantity)
@@ -964,7 +972,26 @@ def enter_address(request, product_id):
             messages.error(request, "Please fill in all the required fields.")
 
     # Render the address form
-    return render(request, 'address.html', {'product': product, 'quantity': quantity})
+    return render(request, 'addresss.html', {'product': product, 'quantity': quantity})
+
+
+@login_required
+def select_address(request, product_id):
+    # Get quantity from POST or set a default value of 1 if it doesn't exist
+    quantity = request.POST.get('quantity', 1)
+    product = Product.objects.get(id=product_id)
+
+    # Fetch saved addresses for the logged-in user
+    user_addresses = UserAddress.objects.filter(user=request.user)
+
+    context = {
+        'user_addresses': user_addresses,
+        'product_id': product_id,
+        'quantity': quantity,
+        'product': product,
+    }
+
+    return render(request, 'address.html', context)
 
 
 
@@ -972,7 +999,8 @@ def enter_address(request, product_id):
 def book_now(request, product_id,quantity):
     product = get_object_or_404(Product, id=product_id)
     # quantity = int(request.POST.get('quantity', 1))  # Get the selected quantity from POST data
-    
+    address_id=request.POST.get('selected_address')
+    print(address_id)
      # Calculate total price
     total_price = product.price * quantity
 
@@ -986,14 +1014,14 @@ def book_now(request, product_id,quantity):
         'total_price': total_price,
         'delivery_charge': delivery_charge,
         'final_price': final_price,
-    })
+        'address': address_id    })
 
 
 @login_required
 def create_order(request, product_id):
     product = Product.objects.get(id=product_id)
     quantity = int(request.POST.get('quantity', 1))
-
+    address_id = request.POST.get('address')
     # Check if sufficient stock is available
     if product.stock < quantity:
         messages.error(request, "Insufficient stock available!")
@@ -1002,7 +1030,7 @@ def create_order(request, product_id):
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
     
     # Fetch user's saved address (you can customize this to allow address selection)
-    user_address = UserAddress.objects.filter(user=request.user).first()
+    user_address = UserAddress.objects.get(id=address_id)
 
     total_price = product.price * quantity
 
@@ -1126,3 +1154,42 @@ def admin_all_orders(request):
     orders = Order.objects.all().order_by('-created_at')  # Assuming 'created_at' is a field in Order model
 
     return render(request, 'admin_orders.html', {'orders': orders})
+
+
+# Make sure your Complaint model is imported
+
+
+def reply_complaint(request, complaint_id):
+    complaint = get_object_or_404(Complaint, id=complaint_id)
+    user_email = complaint.user.email  # Fetch user's email from the Complaint model's user relationship
+
+    if request.method == 'POST':
+        # Compose the response email (this could be a predefined message or dynamically composed)
+        response = request.POST.get('response')
+        subject = f"Response to your complaint: {complaint.subject}"
+        message = f"""Dear {complaint.user.username},
+
+Thank you for bringing your concern to our attention. We value your feedback and are committed to ensuring you have a positive experience with us.
+
+Response to your complaint:
+{response}
+
+If you have further questions or require additional assistance, please feel free to reach out. We appreciate your patience and understanding as we work to address this matter.
+
+Warm regards,  
+[Seller's Name or Team]
+Aqua Hub Support Team
+"""
+
+        try:
+            send_mail(
+                subject,
+                message,
+                'aquahub837@gmail.com',  # Replace with the seller's or platform's email
+                [user_email],
+            )
+            messages.success(request, f"Reply email successfully sent to {complaint.user.username}.")
+        except Exception as e:
+            messages.error(request, f"Failed to send reply. Error: {e}")
+
+    return redirect('view_complaints')  # Redirect back to the complaints list
