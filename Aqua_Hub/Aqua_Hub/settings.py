@@ -35,7 +35,7 @@ SECRET_KEY = 'django-insecure-c+bl8l*c-^gfx90io3f6y&8)gt!y8wwk_)opqhz@r7m6+ky1gm
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -119,17 +120,30 @@ WSGI_APPLICATION = 'Aqua_Hub.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME':'aqua_hub',
+#          'USER':'root',
+#          'PASSWORD':'',
+#          'HOST':'localhost',
+#          'PORT':'3306',
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME':'aqua_hub',
-         'USER':'root',
-         'PASSWORD':'',
-         'HOST':'localhost',
-         'PORT':'3306',
+        'NAME':'aquahub_tonightbox',
+         'USER':'aquahub_tonightbox',
+         'PASSWORD':'c07dd4b852617e6a2297007ca00e2590af36368a',
+         'HOST':'ubtfn.h.filess.io',
+         'PORT':'3307',
+         'OPTIONS':{
+             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+         }
     }
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
