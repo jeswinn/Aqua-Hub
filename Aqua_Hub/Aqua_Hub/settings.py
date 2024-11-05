@@ -124,7 +124,7 @@ WSGI_APPLICATION = 'Aqua_Hub.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
-#         'NAME':'aqua_hub',
+#         'NAME':'aq',
 #          'USER':'root',
 #          'PASSWORD':'',
 #          'HOST':'localhost',
@@ -141,7 +141,7 @@ DATABASES = {
          'HOST':'ubtfn.h.filess.io',
          'PORT':'3307',
          'OPTIONS':{
-             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+              'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
          }
     }
 }
@@ -179,8 +179,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
