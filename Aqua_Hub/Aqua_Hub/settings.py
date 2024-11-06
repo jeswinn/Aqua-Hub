@@ -204,3 +204,5 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
 
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY')
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
