@@ -89,6 +89,8 @@
                     <div class="dropdown-menu">
                         <a href="{% url 'blog_list'%}" class="dropdown-item">Blog</a>
                         <a href="#" class="dropdown-item">Community</a>
+                    </div>
+                </div>
             {% else %}
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
@@ -100,7 +102,11 @@
                     <a href="{% url 'completed_orders' %}" class="nav-item nav-link">ORDERS</a>
                     <a href="{% url 'register_complaint' %}" class="nav-item nav-link">Complaint</a>
                     <a href="{% url 'view_cart' %}" class="nav-item nav-link">Cart</a>
-                    <a href="{% url 'logout' %}" class="nav-item nav-link">Logout</a>
+                    {% comment %} <div class="nav-item dropdown"> {% endcomment %}
+                        {% comment %} <div class="dropdown-menu"> {% endcomment %}
+                            <a href="{% url 'logout' %}" class="nav-item nav-link">Logout</a>
+                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">{{ request.user.username }}</a>
+                    
                         
                     {% comment %} <a href="bb.html" class="nav-item nav-link">blog</a> {% endcomment %}
                 </div>

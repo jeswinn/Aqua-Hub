@@ -10,17 +10,17 @@
             <input type="text" name="username" class="form-control" value="{{ user.username }}" readonly>
         </div>
 
-        <div class="form-group mb-3">
+        {% comment %} <div class="form-group mb-3">
             <label for="first_name">First Name</label>
             <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
             <small id="firstNameError" class="text-danger"></small>
-        </div>
+        </div> {% endcomment %}
 
-        <div class="form-group mb-3">
+        {% comment %} <div class="form-group mb-3">
             <label for="last_name">Last Name</label>
             <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
             <small id="lastNameError" class="text-danger"></small>
-        </div>
+        </div> {% endcomment %}
 
         <div class="form-group mb-3">
             <label for="email">Email</label>
