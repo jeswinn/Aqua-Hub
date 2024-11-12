@@ -282,13 +282,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Seller
 
-# @login_required
-# def approve_seller(request, id):
-#     seller = get_object_or_404(Seller, pk=id)
-#     seller.approved = True  # Approve the seller
-#     seller.save()
-#     messages.success(request, 'Seller approved successfully!')
-#     return redirect('admin_approval_page')  # Redirect to approval page
+@login_required
+def approve_seller(request, seller_id):
+    seller = get_object_or_404(Seller, id=seller_id)
+    seller.approved = True  # Approve the seller
+    seller.save()
+    messages.success(request, 'Seller approved successfully!')
+    return redirect('admin_approval_page')  # Redirect to approval page
 
 
 @login_required
@@ -656,15 +656,15 @@ def profile_view(request):
         
         if request.method == 'POST':
             # Get user details from the form
-            # first_name = request.POST.get('first_name')
-            # last_name = request.POST.get('last_name')
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
             email = request.POST.get('email')
             phone_number = request.POST.get('phone_number')
             
             
             # Update user fields
-            # user.first_name = first_name
-            # user.last_name = last_name
+            user.first_name = first_name
+            user.last_name = last_name
             user.email = email
             user.phone_number =phone_number
             
@@ -1062,9 +1062,7 @@ def create_order(request, product_id):
         'order': order,
         'razorpay_order_id': razorpay_order['id'],
         'razorpay_key_id': settings.RAZORPAY_KEY_ID,
-        'total_price': total_price,
         'final_price': final_price,
-        'delivery_charge': delivery_charge,
     }
 
     return render(request, 'order_summary.html', context)
@@ -1179,6 +1177,7 @@ Response to your complaint:
 If you have further questions or require additional assistance, please feel free to reach out. We appreciate your patience and understanding as we work to address this matter.
 
 Warm regards,  
+[Seller's Name or Team]
 Aqua Hub Support Team
 """
 

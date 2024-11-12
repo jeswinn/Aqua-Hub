@@ -48,12 +48,12 @@
                 <!-- Footer with additional information -->
                 <div class="card-footer d-flex justify-content-between align-items-center">
                     <small class="text-muted">Posted by {{ blog.author.username }} on {{ blog.created_at|date:"M d, Y" }}</small>
-                    {% comment %} <!-- Indicator for comments -->
+                    <!-- Indicator for comments -->
                     {% if blog.allow_comments %}
                     <span class="badge bg-success">Comments Enabled</span>
                     {% else %}
                     <span class="badge bg-secondary">No Comments</span>
-                    {% endif %} {% endcomment %}
+                    {% endif %}
                 </div>
             </div>
         </div>

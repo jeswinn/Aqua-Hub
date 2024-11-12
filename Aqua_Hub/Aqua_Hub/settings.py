@@ -53,7 +53,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -61,7 +60,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
-    
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -121,30 +120,30 @@ WSGI_APPLICATION = 'Aqua_Hub.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME':'aquahb',
-#          'USER':'root',
-#          'PASSWORD':'',
-#          'HOST':'localhost',
-#          'PORT':'3306',
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME':'aquahub_tonightbox',
-         'USER':'aquahub_tonightbox',
-         'PASSWORD':'c07dd4b852617e6a2297007ca00e2590af36368a',
-         'HOST':'ubtfn.h.filess.io',
-         'PORT':'3307',
-         'OPTIONS':{
-              'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-         }
+        'NAME':'aquahb',
+         'USER':'root',
+         'PASSWORD':'',
+         'HOST':'localhost',
+         'PORT':'3306',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME':'aquahub_tonightbox',
+#          'USER':'aquahub_tonightbox',
+#          'PASSWORD':'c07dd4b852617e6a2297007ca00e2590af36368a',
+#          'HOST':'ubtfn.h.filess.io',
+#          'PORT':'3307',
+#          'OPTIONS':{
+#              'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#          }
+#     }
+# }
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -179,9 +178,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
+STATICFILES_DIRS=[
+    BASE_DIR / 'static',
+]
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -202,5 +205,3 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
 
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY')
-
-
