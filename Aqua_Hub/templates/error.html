@@ -1,0 +1,149 @@
+{% extends 'newindex.html' %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Product Image Section -->
+        <div class="col-md-6">
+            <div class="product-image-wrapper text-center">
+                <img src="{{ product.image.url }}" alt="{{ product.product_name }}" class="img-fluid shadow-lg rounded" style="max-height: 500px; object-fit: contain; width: 100%; border: 2px solid #ddd;">
+            </div>
+        </div>
+
+        <!-- Product Details Section -->
+        <div class="col-md-6">
+            <div class="product-details">
+                <h2 class="text-primary fw-bold">{{ product.product_name }}</h2>
+                <h4 class="text-success fw-bold">₹{{ product.price }}</h4>
+                <p class="text-muted mt-3">{{ product.description }}</p>
+
+                <!-- Stock Information -->
+                {% if product.stock > 0 %}
+                    <p class="text-info"><i class="bi bi-check-circle-fill text-success"></i> In Stock: {{ product.stock }}</p>
+                {% else %}
+                    <p class="text-danger"><i class="bi bi-x-circle-fill"></i> Out of Stock</p>
+                {% endif %}
+
+                <!-- Quantity Selector and Buttons -->
+                {% if product.stock > 0 %}
+                <form method="POST" action="{% url 'add_to_cart' product.id %}" id="cartForm" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex align-items-center gap-3">
+                        <label for="quantity" class="form-label mb-0">Quantity:</label>
+                        <input type="number" id="quantity" name="quantity" class="form-control text-center" min="1" max="{{ product.stock }}" value="1" style="width: 80px;">
+                    </div>
+
+                    <div class="d-flex gap-3 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg w-100" id="addToCartBtn"><i class="bi bi-cart-plus"></i> Add to Cart</button>
+                        <form method="POST" action="{% url 'select_address' product.id %}" id="bookForm" class="w-100">
+                            {% csrf_token %}
+                            <input type="hidden" id="bookQuantity" name="quantity" value="1" min="1" max="{{ product.stock }}">
+                            <button type="submit" class="btn btn-warning btn-lg w-100" id="bookNowBtn"><i class="bi bi-box-seam"></i> Book Now</button>
+                        </form>
+                    </div>
+                    <div id="error-message" class="text-danger mt-2" style="display: none;"></div>
+                </form>
+                {% endif %}
+
+                <!-- Out of Stock Button -->
+                {% if product.stock == 0 %}
+                    <button class="btn btn-secondary btn-lg w-100 mt-4" disabled><i class="bi bi-x-circle"></i> Out of Stock</button>
+                {% endif %}
+
+                <!-- Return Policy -->
+                <div class="my-4">
+                    <h5 class="fw-bold">Return Policy</h5>
+                    <p class="text-muted">Eligible for return within 7 days of delivery. Items must be unused and in original packaging. Live products (e.g., fish) can only be returned if dead or unhealthy upon delivery with proof within 24 hours.</p>
+                </div>
+
+                <!-- Seller Details -->
+                <div class="my-4">
+                    <h5 class="fw-bold">Seller Details</h5>
+                    <table class="table table-bordered table-sm">
+                        <tbody>
+                            <tr>
+                                <th>Shop Name</th>
+                                <td>{{ product.seller.shop_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Contact</th>
+                                <td>{{ product.seller.contact_num }}</td>
+                            </tr>
+                            <tr>
+                                <th>Location</th>
+                                <td>{{ product.seller.location }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Review Button -->
+                <div class="text-center mt-4">
+                    <a href="{% url 'submit_review' product.id %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil-square"></i> Write a Review</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Care Information -->
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <div class="card shadow-sm p-4">
+                <h4 class="fw-bold text-primary">Care Information for {{ product.product_name }}</h4>
+                <table class="table table-bordered table-striped mt-3">
+                    <tbody>
+                        <tr>
+                            <th>Water Quality</th>
+                            <td>{{ product.water_quality }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tank Size</th>
+                            <td>{{ product.tank_size }}</td>
+                        </tr>
+                        <tr>
+                            <th>Feeding</th>
+                            <td>{{ product.feeding }}</td>
+                        </tr>
+                        <tr>
+                            <th>Behavior</th>
+                            <td>{{ product.behavior }}</td>
+                        </tr>
+                        <tr>
+                            <th>Health Issues</th>
+                            <td>{{ product.health_issues }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('cartForm');
+        const quantityInput = document.getElementById('quantity');
+        const maxQuantity = parseInt(quantityInput.max);
+        const errorMessage = document.getElementById('error-message');
+
+        // Add to Cart validation
+        form.addEventListener('submit', function (event) {
+            const selectedQuantity = parseInt(quantityInput.value);
+            if (selectedQuantity > maxQuantity) {
+                errorMessage.textContent = `Only ${maxQuantity} items in stock. Please select a lower quantity.`;
+                errorMessage.style.display = 'block';
+                event.preventDefault();
+            } else {
+                errorMessage.style.display = 'none';
+            }
+        });
+
+        // Book Now validation
+        const bookNowBtn = document.getElementById('bookNowBtn');
+        const bookQuantityInput = document.getElementById('bookQuantity');
+        bookNowBtn.addEventListener('click', function (event) {
+            const selectedQuantity = parseInt(quantityInput.value);
+            if
+::contentReference[oaicite:0]{index=0}
+ 
+{%endblock%}

@@ -71,8 +71,19 @@ urlpatterns = [
       path('seller/orders/', seller_orders, name='seller_orders'),
       path('admin_orders/', admin_all_orders, name='admin_all_orders'),
       path('product/<int:product_id>/select-address/', select_address, name='select_address'),
-       path('reply-complaint/<int:complaint_id>/', reply_complaint, name='reply_complaint'),
-      
+      path('reply-complaint/<int:complaint_id>/', reply_complaint, name='reply_complaint'),
+      path('fish-food/',food_list, name='food_list'),
+      path('plant/',plants_list, name='plants_list'),
+      path('review/<int:product_id>',submit_review, name='submit_review'),
+      path('product/<int:product_id>/reviews/', product_reviews, name='product_reviews'),
+      path('disease/',disease_detector,name='disease_detector'),
+      path('wishlist/',wishlist_view,name='wishlist'),
+      path('add_to_wishlist/<int:product_id>/',add_to_wishlist,name='add_to_wishlist'),
+      path('remove_from_wishlist/<int:product_id>/',remove_from_wishlist,name='remove_from_wishlist'),
+    #   path("analyze_water/", analyze_water, name="analyze_water"),
+      path('water-quality-analyzer/', water_quality_analyzer, name='water_quality_analyzer'),
+]
+     
 
 
 
@@ -81,7 +92,7 @@ urlpatterns = [
      
     
     
-]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

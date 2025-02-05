@@ -1,21 +1,79 @@
 {% extends 'newindex.html' %}
 {% block body %}
 <div class="container my-5">
-    <h2 class="text-center mb-4">Explore Products</h2>
-
     <style>
         .card {
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
         }
-        
+
         .card:hover {
             transform: translateY(-10px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
+
+        /* Styling for category buttons */
+        .category-buttons {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .category-buttons .btn {
+            min-width: 120px;
+            font-weight: bold;
+        }
+
+        /* Wishlist Icon Styling */
+        .wishlist-icon {
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 5px;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        .wishlist-heart {
+            font-size: 1.5rem;
+            color: lightgray; /* Default color */
+            transition: color 0.3s ease;
+        }
+
+        .wishlist-heart.liked {
+            color: red; /* Color when liked */
+        }
+
+        .wishlist-heart:hover {
+            color: red; /* Color on hover */
+        }
     </style>
-    
-    <!-- Search and Sort Bar -->
-    <div class="d-flex justify-content-between mb-4">
+
+    <!-- Display Success/Warning Messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert 
+                    {% if message.tags == 'success' %}alert-success
+                    {% elif message.tags == 'warning' %}alert-warning
+                    {% else %}alert-info{% endif %} 
+                    alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Category Buttons -->
+    <div class="category-buttons">
+        <a href="{% url 'product_list' %}" class="btn btn-outline-primary">Fish</a>
+        <a href="{% url 'food_list' %}" class="btn btn-outline-primary">Fish Food</a>
+        <a href="{% url 'plants_list' %}" class="btn btn-outline-primary">Aquatic Plants</a>
+    </div>
+
+    <!-- Search, Sort, and Filter Bar -->
+    <div class="d-flex justify-content-between mb-4 align-items-center">
         <!-- Search Bar -->
         <form method="GET" action="{% url 'product_list' %}" class="d-flex">
             <input type="text" name="q" class="form-control me-2" placeholder="Search for products..." value="{{ request.GET.q }}">
@@ -24,7 +82,6 @@
 
         <!-- Sort By Dropdown -->
         <form method="GET" action="{% url 'product_list' %}" class="d-flex">
-            <input type="hidden" name="q" value="{{ request.GET.q }}">
             <select name="sort" class="form-select me-2" onchange="this.form.submit()">
                 <option value="" disabled selected>Sort By</option>
                 <option value="price-asc" {% if request.GET.sort == "price-asc" %}selected{% endif %}>Price: Low to High</option>
@@ -37,7 +94,17 @@
     <div class="row">
         {% for product in products %}
         <div class="col-md-4 mb-4">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm position-relative">
+                <!-- Wishlist Icon -->
+                <div class="wishlist-icon position-absolute" style="top: 10px; right: 10px;">
+                    <form method="POST" action="{% url 'add_to_wishlist' product.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link p-0 border-0 bg-transparent">
+                            <i class="fa fa-heart wishlist-heart {% if product in user_wishlist_products %}liked{% endif %}" 
+                               title="Add to Wishlist"></i>
+                        </button>
+                    </form>
+                </div>
                 <img src="{{ product.image.url }}" alt="{{ product.product_name }}" class="card-img-top img-fluid" style="max-height: 200px; object-fit: cover;">
                 <div class="card-body">
                     <h5 class="card-title">{{ product.product_name }}</h5>
@@ -63,7 +130,7 @@
             <ul class="pagination">
                 {% if products.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}&sort={{ request.GET.sort }}" aria-label="Previous">
+                    <a class="page-link" href="?page={{ products.previous_page_number }}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 </li>
@@ -71,13 +138,13 @@
 
                 {% for num in products.paginator.page_range %}
                 <li class="page-item {% if products.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}&sort={{ request.GET.sort }}">{{ num }}</a>
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
                 </li>
                 {% endfor %}
 
                 {% if products.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}&sort={{ request.GET.sort }}" aria-label="Next">
+                    <a class="page-link" href="?page={{ products.next_page_number }}" aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 </li>
@@ -87,4 +154,7 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Add Font Awesome for Wishlist Icon -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 {% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'newindex.html' %}
+
+{% block body %}
+<div class="container mt-5">
+    <h2 class="text-center">Smart Water Quality Analyzer</h2>
+
+    <!-- Explanation Section -->
+    <div class="alert alert-info mt-4">
+        <h4>How It Works:</h4>
+        <p>
+            This tool helps you analyze your aquarium's water quality to find out which fish would thrive in it.
+            <br>
+            Simply input the pH level and temperature of your tank. The system will match your water
+            parameters with the ideal fish species that can live in those conditions.
+            <br>
+        </p>
+    </div>
+
+    <!-- Form for User Input -->
+    <div class="mt-4 p-4 shadow-lg rounded bg-light">
+        <form method="post">
+            {% csrf_token %}
+            <label>Enter pH Level (5-8):</label>
+            <input type="number" name="ph" step="0.1" min="5" max="8" class="form-control" 
+                   value="{{ request.POST.ph }}" required>
+
+            <label class="mt-3">Enter Water Temperature (°C) (17-31):</label>
+            <input type="number" name="temperature" step="0.1" min="17" max="31" class="form-control" 
+                   value="{{ request.POST.temperature }}" required>
+
+            <!-- Hidden Water Hardness Input (disabled but still passed to the backend) -->
+            <input type="hidden" name="hardness" value="medium">
+
+            <button type="submit" class="btn btn-success mt-3">Analyze</button>
+        </form>
+    </div>
+
+    <!-- Display Errors if Any -->
+    {% if error %}
+        <div class="alert alert-danger mt-3">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- Display Recommended Fish -->
+    {% if fish_list %}
+        <h3 class="mt-5">Recommended Fish</h3>
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="table-success">
+                    <tr>
+                        <th>Fish Name</th>
+                        <th>Min pH</th>
+                        <th>Max pH</th>
+                        <th>Min Temp (°C)</th>
+                        <th>Max Temp (°C)</th>
+                        <th>Water Hardness</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fish in fish_list %}
+                    <tr>
+                        <td>{{ fish.fish_name }}</td>
+                        <td>{{ fish.min_ph }}</td>
+                        <td>{{ fish.max_ph }}</td>
+                        <td>{{ fish.min_temp }}</td>
+                        <td>{{ fish.max_temp }}</td>
+                        <td class="text-capitalize">{{ fish.hardness }}</td>
+                        <td>{{ fish.description }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-danger mt-3">
+            No matching fish found. Try adjusting your water parameters.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

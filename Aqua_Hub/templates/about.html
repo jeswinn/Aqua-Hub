@@ -79,7 +79,7 @@
                 <a href="{% url 'index' %}" class="nav-item nav-link">Home</a>
                 <a href="about.html" class="nav-item nav-link active">About</a>
             
-                <a href="product.html" class="nav-item nav-link">Product</a>
+                {% comment %} <a href="{% url 'product_list' %}" class="nav-item nav-link">Product</a> {% endcomment %}
                 <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">community</a>
                     <div class="dropdown-menu m-0">

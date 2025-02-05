@@ -32,13 +32,18 @@
         <h2 class="text-center">Add New Product</h2>
         <form method="POST" action="{% url 'add_product' %}" enctype="multipart/form-data" class="shadow p-5 rounded bg-light" id="productForm">
             {% csrf_token %}
-            {% if sellers %}
+        
             <div class="form-group mb-3">
-                <label for="product_cat">Category</label>
-                <input type="text" name="product_cat" class="form-control" value="{{ sellers.product_type }}" disabled>
+                <label for="category">Category</label>
+                <select name="category" class="form-control" id="productCategory" required>
+                    <option value="" disabled selected>Select a Category</option>
+                    <option value="fish">Fish</option>
+                    <option value="food">Fish Food</option>
+                    <option value="plants">Aquatic Plants</option>
+                </select>
+                <small id="categoryError" class="text-danger"></small>
             </div>
-            {% endif %}
-            
+        
             <!-- Product Fields -->
             <div class="form-group mb-3">
                 <label for="product_name">Product Name</label>
@@ -69,37 +74,57 @@
                 <small id="descriptionError" class="text-danger"></small>
             </div>
             
-            <!-- Fish Care Information -->
-            <h3 class="mt-4">Fish Care Information</h3>
-            
-            <div class="form-group mb-3">
-                <label for="water_quality">Water Quality (e.g., 7-8 pH)</label>
-                <input type="text" name="water_quality" class="form-control" placeholder="e.g., pH 6.0-7.0" required>
-                <small id="waterQualityError" class="text-danger"></small>
+            <!-- Care Information Section -->
+            <div id="careInfoSection">
+                <h3 class="mt-4">Fish Care Information</h3>
+                
+                <div class="form-group mb-3">
+                    <label for="water_quality">Water Quality (e.g., 7-8 pH)</label>
+                    <input type="text" name="water_quality" class="form-control" placeholder="e.g., pH 6.0-7.0">
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="tank_size">Tank Size (e.g., 20 gallons)</label>
+                    <input type="text" name="tank_size" class="form-control" placeholder="e.g., 20 gallons or 75 liters">
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="feeding">Feeding</label>
+                    <input type="text" name="feeding" class="form-control" placeholder="e.g., Flakes, Pellets, Vegetables">
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="behavior">Behavior</label>
+                    <input type="text" name="behavior" class="form-control" placeholder="e.g., Peaceful, Schooling">
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="health_issues">Health Issues</label>
+                    <input type="text" name="health_issues" class="form-control" placeholder="e.g., Swim Bladder Disorder, Ich">
+                </div>
             </div>
-            
-            <div class="form-group mb-3">
-                <label for="tank_size">Tank Size (e.g., 20 gallons)</label>
-                <input type="text" name="tank_size" class="form-control" placeholder="e.g., 20 gallons or 75 liters" required>
-                <small id="tankSizeError" class="text-danger"></small>
-            </div>
-            
-            <div class="form-group mb-3">
-                <label for="feeding">Feeding</label>
-                <input type="text" name="feeding" class="form-control" placeholder="e.g., Flakes, Pellets, Vegetables" required>
-                <small id="feedingError" class="text-danger"></small>
-            </div>
-            
-            <div class="form-group mb-3">
-                <label for="behavior">Behavior</label>
-                <input type="text" name="behavior" class="form-control" placeholder="e.g., Peaceful, Schooling" required>
-                <small id="behaviorError" class="text-danger"></small>
-            </div>
-            
-            <div class="form-group mb-3">
-                <label for="health_issues">Health Issues</label>
-                <input type="text" name="health_issues" class="form-control" placeholder="e.g., Swim Bladder Disorder, Ich" required>
-                <small id="healthIssuesError" class="text-danger"></small>
+        
+            <!-- Quantity Suitability Section -->
+            <div id="quantitySuitabilitySection">
+                <div class="form-group mb-3">
+                    <label for="suitable">Suitable For</label>
+                    <select name="suitable" class="form-control">
+                        <option value="young">Young</option>
+                        <option value="adult">Adult</option>
+                        <option value="senior">Senior</option>
+                    </select>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="weight">Weight</label>
+                    <select name="weight" class="form-control">
+                        <option value="100g">100g</option>
+                        <option value="200g">200g</option>
+                        <option value="500g">500g</option>
+                        <option value="1kg">1kg</option>
+                        <option value="2kg">2kg</option>
+                    </select>
+                </div>
             </div>
             
             <div class="text-center">
@@ -107,83 +132,38 @@
             </div>
         </form>
     </div>
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const productForm = document.getElementById('productForm');
-            const priceInput = document.querySelector('input[name="price"]');
-            const waterQualityInput = document.querySelector('input[name="water_quality"]');
-            const tankSizeInput = document.querySelector('input[name="tank_size"]');
-            const feedingInput = document.querySelector('input[name="feeding"]');
-            const behaviorInput = document.querySelector('input[name="behavior"]');
-            const healthIssuesInput = document.querySelector('input[name="health_issues"]');
-            
-            const priceError = document.getElementById('priceError');
-            const waterQualityError = document.getElementById('waterQualityError');
-            const tankSizeError = document.getElementById('tankSizeError');
-            const feedingError = document.getElementById('feedingError');
-            const behaviorError = document.getElementById('behaviorError');
-            const healthIssuesError = document.getElementById('healthIssuesError');
-
-            const phRegex = /^[0-9]+(\.[0-9]+)?-?[0-9]*\s*pH$/i;
-            const tankSizeRegex = /^[0-9]+(\.[0-9]+)?\s*(gallons|liters)$/i;
-            
-            productForm.addEventListener('submit', function (event) {
-                let isValid = true;
-
-                // Validate price
-                if (Number(priceInput.value) < 1) {
-                    priceError.textContent = "Price must be at least 1.";
-                    isValid = false;
-                } else {
-                    priceError.textContent = "";
-                }
-
-                // Validate water quality (e.g., 7-8 pH)
-                if (!phRegex.test(waterQualityInput.value.trim())) {
-                    waterQualityError.textContent = "Please enter a valid water quality (e.g., 7-8 pH).";
-                    isValid = false;
-                } else {
-                    waterQualityError.textContent = "";
-                }
-
-                // Validate tank size (e.g., 20 gallons or liters)
-                if (!tankSizeRegex.test(tankSizeInput.value.trim())) {
-                    tankSizeError.textContent = "Please enter a valid tank size (e.g., 20 gallons or 75 liters).";
-                    isValid = false;
-                } else {
-                    tankSizeError.textContent = "";
-                }
-
-                // Validate feeding, behavior, and health issues (minimum 10 characters)
-                if (feedingInput.value.trim().length < 10) {
-                    feedingError.textContent = "Feeding information must be at least 10 characters.";
-                    isValid = false;
-                } else {
-                    feedingError.textContent = "";
-                }
-
-                if (behaviorInput.value.trim().length < 10) {
-                    behaviorError.textContent = "Behavior description must be at least 10 characters.";
-                    isValid = false;
-                } else {
-                    behaviorError.textContent = "";
-                }
-
-                if (healthIssuesInput.value.trim().length < 10) {
-                    healthIssuesError.textContent = "Health issues description must be at least 10 characters.";
-                    isValid = false;
-                } else {
-                    healthIssuesError.textContent = "";
-                }
-
-                if (!isValid) {
-                    event.preventDefault();
+            const categorySelect = document.getElementById('productCategory');
+            const careInfoSection = document.getElementById('careInfoSection');
+            const quantitySuitabilitySection = document.getElementById('quantitySuitabilitySection');
+        
+            // Initially hide care info and quantity suitability sections
+            careInfoSection.style.display = 'none';
+            quantitySuitabilitySection.style.display = 'none';
+        
+            categorySelect.addEventListener('change', function () {
+                const selectedCategory = categorySelect.value;
+        
+                // Show care info only if "Fish" is selected
+                if (selectedCategory === 'fish') {
+                    careInfoSection.style.display = 'block';
+                    quantitySuitabilitySection.style.display = 'none';
+                } 
+                // Show quantity suitability only if "Fish Food" is selected
+                else if (selectedCategory === 'food') {
+                    careInfoSection.style.display = 'none';
+                    quantitySuitabilitySection.style.display = 'block';
+                } 
+                // Hide both sections for other categories
+                else {
+                    careInfoSection.style.display = 'none';
+                    quantitySuitabilitySection.style.display = 'none';
                 }
             });
         });
     </script>
-
+    
     <script src="{% static 'js/main.js' %}"></script>
-</body>
-</html>
+    

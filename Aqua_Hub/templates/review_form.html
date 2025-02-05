@@ -1,0 +1,260 @@
+{% extends 'newindex.html' %}
+
+{% block body %}
+<div class="review-container">
+    <style>
+        .review-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-family: Arial, sans-serif;
+        }
+
+        .product-details {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-image {
+            width: 100%;
+            max-width: 150px;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .product-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .product-price {
+            font-size: 1.2rem;
+            color: #388e3c; /* Green tone for Aqua Hub */
+            font-weight: 500;
+        }
+
+        h2 {
+            color: #388e3c;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .star-rating span {
+            font-size: 2rem;
+            cursor: pointer;
+            color: lightgray; /* Default color for unselected stars */
+            transition: color 0.3s ease;
+        }
+
+        .star-rating span.selected,
+        .star-rating span.hovered {
+            color: gold; /* Highlighted star color */
+        }
+
+        textarea {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            resize: none;
+            height: 120px;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: #388e3c;
+            outline: none;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-top: 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="file"]:focus {
+            border-color: #388e3c;
+            outline: none;
+        }
+
+        button {
+            background-color: #388e3c;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2e7d32;
+        }
+
+        @media (max-width: 480px) {
+            .review-container {
+                padding: 15px;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .product-name {
+                font-size: 1.2rem;
+            }
+
+            .product-price {
+                font-size: 1rem;
+            }
+
+            .star-rating span {
+                font-size: 1.8rem;
+            }
+
+            textarea {
+                font-size: 13px;
+            }
+
+            input[type="file"] {
+                font-size: 13px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+    </style>
+
+    <!-- Product Details -->
+    <div class="product-details">
+        <img 
+            src="{{ product.image.url }}" 
+            alt="{{ product.product_name }}" 
+            class="product-image">
+        <p class="product-name">{{ product.product_name }}</p>
+        <p class="product-price">₹{{ product.price }}</p>
+    </div>
+    
+
+    <!-- Page Content -->
+    <h2>Write a Review</h2>
+    <form method="post" enctype="multipart/form-data" class="review-form">
+        {% csrf_token %}
+        
+        <!-- Hidden input for product ID -->
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+
+        <!-- Rating Section -->
+        <div class="form-group">
+            <label for="rating" class="form-label">Rating</label>
+            <div class="star-rating">
+                <span class="fa fa-star" data-value="1"></span>
+                <span class="fa fa-star" data-value="2"></span>
+                <span class="fa fa-star" data-value="3"></span>
+                <span class="fa fa-star" data-value="4"></span>
+                <span class="fa fa-star" data-value="5"></span>
+            </div>
+            <input type="hidden" name="rating" id="rating-value" value="">
+        </div>
+
+        <!-- Review Text Section -->
+        <div class="form-group">
+            <label for="review_text" class="form-label">Review</label>
+            <textarea 
+                id="review_text" 
+                name="review_text" 
+                placeholder="Write your review here..." 
+                required></textarea>
+        </div>
+
+        <!-- Image Upload Section -->
+        <div class="form-group">
+            <label for="images" class="form-label">Upload Images (optional)</label>
+            <input 
+                type="file" 
+                id="images" 
+                name="images" 
+                accept="image/*">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit">Submit Review</button>
+    </form>
+</div>
+
+<!-- Add Font Awesome for Star Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+<!-- Star Rating Script -->
+<script>
+    const stars = document.querySelectorAll('.star-rating span');
+
+    stars.forEach(star => {
+        star.addEventListener('mouseover', function() {
+            const currentValue = parseInt(this.getAttribute('data-value'));
+            stars.forEach(s => {
+                if (parseInt(s.getAttribute('data-value')) <= currentValue) {
+                    s.classList.add('hovered');
+                } else {
+                    s.classList.remove('hovered');
+                }
+            });
+        });
+
+        star.addEventListener('mouseout', function() {
+            stars.forEach(s => s.classList.remove('hovered'));
+        });
+
+        star.addEventListener('click', function() {
+            const selectedValue = parseInt(this.getAttribute('data-value'));
+            document.getElementById('rating-value').value = selectedValue;
+
+            stars.forEach(s => s.classList.remove('selected'));
+            stars.forEach(s => {
+                if (parseInt(s.getAttribute('data-value')) <= selectedValue) {
+                    s.classList.add('selected');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

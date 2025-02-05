@@ -1,0 +1,87 @@
+{% extends 'newindex.html' %}
+{% block body %}
+<div class="container my-5">
+    <h2 class="text-center mb-4" style="color: #388e3c;">Your Wishlist</h2>
+
+    <style>
+        .wishlist-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .wishlist-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 15px 0;
+        }
+
+        .wishlist-item:last-child {
+            border-bottom: none;
+        }
+
+        .wishlist-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .wishlist-details {
+            flex-grow: 1;
+            margin-left: 20px;
+        }
+
+        .wishlist-actions {
+            text-align: right;
+        }
+
+        .wishlist-actions .btn {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .empty-wishlist {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #888;
+        }
+    </style>
+
+    <div class="wishlist-container">
+        {% if wishlist_items %}
+            {% for item in wishlist_items %}
+            <div class="wishlist-item">
+                <!-- Product Image -->
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="wishlist-image">
+                
+                <!-- Product Details -->
+                <div class="wishlist-details">
+                    <h5>{{ item.product.name }}</h5>
+                    <p class="text-muted mb-1">₹{{ item.product.price }}</p>
+                    <p class="text-muted">{{ item.product.description|truncatewords:10 }}</p>
+                </div>
+                
+                <!-- Wishlist Actions -->
+                <div class="wishlist-actions">
+                    <a href="{% url 'product_detail' item.product.id %}" class="btn btn-primary btn-sm">View Details</a>
+                    <form method="POST" action="{% url 'remove_from_wishlist' item.product.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-wishlist">
+            <p>Your wishlist is empty. Start adding your favorite products!</p>
+            <a href="{% url 'product_list' %}" class="btn btn-success mt-3">Explore Products</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

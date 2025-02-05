@@ -17,6 +17,7 @@
                     <th>Order Date</th>
                     <th>Delivery Address</th>
                     <th>Status</th>
+                    <th>Rate This Product</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,15 +29,19 @@
                     <td>{{ order.quantity }}</td>
                     <td>₹{{ order.total_price }}</td>
                     <td>{{ order.created_at|date:"F j, Y" }}</td>
-                    <td>{{ order.address.full_name }}
-                        {{ order.address.address }}
-                        {{ order.address.pincode }}
-                        {{ order.address.contact1 }}
+                    <td>
+                        {{ order.address.full_name }}<br>
+                        {{ order.address.address }}<br>
+                        {{ order.address.pincode }}<br>
+                        {{ order.address.contact1 }}<br>
                         {{ order.address.contact2 }}
-
                     </td>
                     <td>
                         <span class="badge bg-success">Order Confirmed</span>
+                    </td>
+                    <td>
+                        <!-- Rating Button -->
+                        <a href="{% url 'submit_review' product_id=order.product.id %}" class="btn btn-primary btn-sm">Rate This Product</a>
                     </td>
                 </tr>
                 {% endfor %}

@@ -123,7 +123,7 @@ WSGI_APPLICATION = 'Aqua_Hub.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME':'aquahb',
+        'NAME':'oaq',
          'USER':'root',
          'PASSWORD':'',
          'HOST':'localhost',

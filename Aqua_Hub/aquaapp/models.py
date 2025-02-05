@@ -29,6 +29,7 @@ class Seller(models.Model):
 
 
 class Product(models.Model):
+    category = models.CharField(max_length=255, null=True, blank=True)
     seller = models.ForeignKey(Seller, on_delete=models.CASCADE)  # Link to Seller table
     product_name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -36,6 +37,10 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/')
     stock = models.PositiveIntegerField(default=0)  # assuming you need stock field
     is_active = models.BooleanField(default=True)  # New field to track active/inactive products
+    suitable = models.CharField(max_length=255,null=True)
+    weight = models.CharField(max_length=255,null=True)
+
+   
  # New field for fish care details
 
     water_quality = models.CharField(max_length=255,null=True)
@@ -169,3 +174,47 @@ class Order(models.Model):
         return f"Order {self.id} - {self.user.username} - {self.payment_status}"
 
 
+class RatingAndReview(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.PositiveSmallIntegerField()  # 1 to 5 stars
+    review_text = models.TextField(blank=True, null=True)
+    images = models.ImageField(upload_to='review_images/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)  # Ensure it's linked to a purchase
+
+    def __str__(self):
+        return f"Review by {self.user.username} for {self.product.name}"
+    
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlist_items')
+    added_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name}"
+
+    class Meta:
+        unique_together = ('user', 'product')  # Prevent duplicate wishlist entries for the same user and product
+
+
+class FishWaterPreferences(models.Model):
+    fish_name = models.CharField(max_length=100, unique=True)
+    min_ph = models.FloatField()
+    max_ph = models.FloatField()
+    min_temp = models.FloatField()
+    max_temp = models.FloatField()
+    hardness = models.CharField(
+    max_length=50,
+    choices=[
+        ('soft', 'Soft'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+        ('soft_to_medium', 'Soft to Medium'),
+        ('medium_to_hard', 'Medium to Hard'),
+    ]
+)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.fish_name

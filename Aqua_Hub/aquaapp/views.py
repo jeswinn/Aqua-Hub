@@ -1,5 +1,5 @@
 from urllib import request
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -27,6 +27,7 @@ from django.core.exceptions import PermissionDenied
 from django.conf import settings
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 
@@ -361,6 +362,9 @@ def add_product(request):
         feeding = request.POST['feeding']
         behavior = request.POST['behavior']
         health_issues = request.POST['health_issues']
+        category = request.POST.get('category')  # Get category from form
+        suitable = request.POST.get('suitable')
+        weight = request.POST.get('weight')
 
         # Create a new product and associate it with the seller
         product = Product.objects.create(
@@ -375,6 +379,9 @@ def add_product(request):
             feeding=feeding,
             behavior=behavior,
             health_issues=health_issues,
+            category=category,
+            suitable=suitable,
+            weight=weight
         )
         product.save()
         messages.success(request, "Product added successfully!")
@@ -538,56 +545,125 @@ def enable_product(request, product_id):
 
 
 
-@never_cache
+
+
 def product_list_view(request):
-    # Get the search query, letter filter, and sort order if available
+    # Get search query, letter filter, sort order, price range, and category
     query = request.GET.get('q')
     letter = request.GET.get('letter')
-    sort = request.GET.get('sort')  # Sorting order (price-asc or price-desc)
+    sort = request.GET.get('sort')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    category = request.GET.get('category')  # Get category filter from the request
 
     # Fetch all approved and active products
     products = Product.objects.filter(is_active=True)
 
-    # Filter products by search query if provided
+    # Filter by category (e.g., Fish, Fish Food, Aquatic Plants)
+    if category:
+        products = products.filter(category='fish')
+
+    # Filter by search query
     if query:
         products = products.filter(product_name__icontains=query)
 
-    # Filter products by the first letter if a letter is selected
+    # Filter by first letter
     if letter:
-        products = products.filter(product_name__istartswith=letter)  # Case-insensitive filtering by first letter
+        products = products.filter(product_name__istartswith=letter)
 
-    # Sort products by price if sorting is selected
+    # Filter by price range
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    # Sort products by price
     if sort == 'price-asc':
         products = products.order_by('price')
     elif sort == 'price-desc':
         products = products.order_by('-price')
 
     # Set up pagination (e.g., 9 products per page)
-    paginator = Paginator(products, 9)  # Show 9 products per page
+    paginator = Paginator(products, 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Pass paginated products, search query, letter, and sort option to the template
+    # Pass paginated products and filters to the template
     context = {
         'products': page_obj,
-        'query': query,  # Retain the search query in the search bar
-        'letter': letter,  # Retain the selected letter for alphabetical filtering
-        'sort': sort  # Retain the sort option in the sort dropdown
+        'query': query,
+        'letter': letter,
+        'sort': sort,
+        'min_price': min_price,
+        'max_price': max_price,
+        'category': category,  # Pass the selected category to the template
     }
 
     return render(request, 'products.html', context)
 
 
 
+# def food_list(request):
+#     """
+#     View for displaying fish food products.
+#     """
+#     # Filter products by category 'Fish Food'
+#     products = Product.objects.filter(category='Fish Food')
+
+#     # Apply search functionality
+#     query = request.GET.get('q')
+#     if query:
+#         products = products.filter(product_name__icontains=query)
+
+#     # Apply sorting
+#     sort_option = request.GET.get('sort')
+#     if sort_option == 'price-asc':
+#         products = products.order_by('price')  # Low to high
+#     elif sort_option == 'price-desc':
+#         products = products.order_by('-price')  # High to low
+
+#     # Add pagination
+#     from django.core.paginator import Paginator
+#     paginator = Paginator(products, 9)  # Show 9 products per page
+#     page_number = request.GET.get('page')
+#     products = paginator.get_page(page_number)
+
+#     context = {
+#         'products': products,
+#     }
+#     return render(request, 'food.html', context)
+
+
+
+
+
         
+
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Avg
+from .models import Product, RatingAndReview
 
 def product_detail(request, product_id):
     # Get the product by its ID, or return a 404 error if not found
     product = get_object_or_404(Product, id=product_id)
     
-    # Render the product detail template with product data
+    # Fetch all verified reviews for the product, ordered by creation date (newest first)
+    reviews = RatingAndReview.objects.filter(product=product, is_verified=True).order_by('-created_at')
+    
+    # Calculate the average rating for the product
+    average_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+    if average_rating is None:
+        average_rating = 0  # Default to 0 if there are no reviews
+    
+    # Count the total number of reviews
+    total_reviews = reviews.count()
+    
+    # Render the product detail template with product and review data
     context = {
         'product': product,
+        'reviews': reviews,  # Pass all reviews to the template
+        'average_rating': average_rating,  # Pass the average rating
+        'total_reviews': total_reviews,  # Pass the total number of reviews
     }
     return render(request, 'product_detail.html', context)
 
@@ -656,15 +732,15 @@ def profile_view(request):
         
         if request.method == 'POST':
             # Get user details from the form
-            first_name = request.POST.get('first_name')
-            last_name = request.POST.get('last_name')
+            # first_name = request.POST.get('first_name')
+            # last_name = request.POST.get('last_name')
             email = request.POST.get('email')
             phone_number = request.POST.get('phone_number')
             
             
             # Update user fields
-            user.first_name = first_name
-            user.last_name = last_name
+            # user.first_name = first_name
+            # user.last_name = last_name
             user.email = email
             user.phone_number =phone_number
             
@@ -1193,3 +1269,297 @@ Aqua Hub Support Team
             messages.error(request, f"Failed to send reply. Error: {e}")
 
     return redirect('view_complaints')  # Redirect back to the complaints list
+
+
+
+
+def food_list(request):
+    """
+    Fetch and display products categorized as 'Fish Food'.
+    """
+    # Fetch products with category 'Fish Food'
+    products = Product.objects.filter(category='Food')
+
+    # Apply search filter
+    query = request.GET.get('q')
+    if query:
+        products = products.filter(product_name__icontains=query)
+
+    # Add pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(products, 9)  # Show 9 products per page
+    page_number = request.GET.get('page')
+    products = paginator.get_page(page_number)
+
+    # Pass data to the template
+    context = {
+        'products': products,
+    }
+    return render(request, 'food.html', context)
+
+
+
+
+def plants_list(request):
+    """
+    Fetch and display products categorized as 'Aquatic Plants'.
+    """
+    # Fetch products with category 'Aquatic Plants'
+    products = Product.objects.filter(category='Plants')
+
+    # Apply search filter
+    query = request.GET.get('q')
+    if query:
+        products = products.filter(product_name__icontains=query)
+
+    # Add pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(products, 9)  # Show 9 products per page
+    page_number = request.GET.get('page')
+    products = paginator.get_page(page_number)
+
+    # Pass data to the template
+    context = {
+        'products': products,
+    }
+    return render(request, 'plant.html', context)
+
+
+
+
+
+@login_required
+def submit_review(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)  # Fetch product details safely
+    print("Product Name:", product.product_name)
+
+
+    if request.method == 'POST':
+        # Ensure the user has purchased the product
+        user_orders = Order.objects.filter(user=request.user, product=product)
+        if not user_orders.exists():
+            messages.error(request, "You can only review products you've purchased.")
+            return redirect('completed_orders')
+
+        # Retrieve the review data from the POST request
+        rating = request.POST.get('rating')
+        review_text = request.POST.get('review_text')
+        images = request.FILES.get('images')
+
+        # Validation for rating
+        if not rating or not rating.isdigit() or int(rating) not in range(1, 6):
+            messages.error(request, "Please select a valid rating between 1 and 5 stars.")
+            return redirect('submit_review', product_id=product.id)
+
+        # Validation for review text
+        if not review_text:
+            messages.error(request, "Please provide a review text.")
+            return redirect('submit_review', product_id=product.id)
+
+        # Save the review
+        RatingAndReview.objects.create(
+            product=product,
+            user=request.user,
+            rating=int(rating),
+            review_text=review_text,
+            images=images,
+            is_verified=True
+        )
+
+        messages.success(request, "Your review has been submitted successfully!")
+        return redirect('completed_orders')
+
+    return render(request, 'review_form.html', {'product': product})
+
+
+
+def product_reviews(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    reviews = product.reviews.all()
+    
+    # Calculate the average rating for the product
+    avg_rating = product.reviews.aggregate(models.Avg('rating'))['rating__avg'] or 0
+    product.avg_rating = round(avg_rating, 1)  # Round to 1 decimal place
+
+    return render(request, 'reviews.html', {
+        'product': product,
+        'reviews': reviews
+    })
+
+
+def disease_detector(request):
+    result = None
+    if request.method == 'POST' and request.FILES.get('fish_image'):
+        fish_image = request.FILES['fish_image']
+        fs = FileSystemStorage()
+        filename = fs.save(fish_image.name, fish_image)
+        file_url = fs.url(filename)
+        
+        # Placeholder for analysis logic
+        # In the future, you can pass the file for AI-based disease detection
+        
+        result = {
+            'disease': 'Example Disease (for testing)',
+            'recommendation': 'Example recommendation for care.',
+        }
+        return render(request, 'fish_disease_detection.html', {'result': result, 'file_url': file_url})
+    
+    return render(request, 'disease.html', {'result': result})
+
+
+
+@login_required
+def wishlist_view(request):
+    """
+    View to display the user's wishlist.
+    """
+    # Fetch wishlist items for the logged-in user
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
+
+    # Render the wishlist template
+    return render(request, 'wishlist.html', {'wishlist_items': wishlist_items})
+
+@login_required
+def add_to_wishlist(request, product_id):
+    """
+    View to add or remove a product from the user's wishlist.
+    """
+    product = get_object_or_404(Product, id=product_id)
+    user = request.user
+
+    # Check if the product is already in the user's wishlist
+    wishlist_item, created = Wishlist.objects.get_or_create(user=user, product=product)
+
+    if not created:
+        # If product is already in the wishlist, remove it
+        wishlist_item.delete()
+        messages.success(request, f'{product.product_name} has been removed from your wishlist.')
+    else:
+        messages.success(request, f'{product.product_name} has been added to your wishlist.')
+
+    # Redirect back to the product list page
+    return redirect('product_list')
+
+@login_required
+def remove_from_wishlist(request, product_id):
+    """
+    View to remove a product from the user's wishlist.
+    """
+    product = get_object_or_404(Product, id=product_id)
+    wishlist_item = Wishlist.objects.filter(user=request.user, product=product)
+
+    if wishlist_item.exists():
+        wishlist_item.delete()
+        messages.success(request, f'{product.product_name} has been removed from your wishlist.')
+    else:
+        messages.warning(request, f'{product.product_name} is not in your wishlist.')
+
+    # Redirect back to the wishlist page
+    return redirect('wishlist')
+
+
+# def analyze_water(request):
+#     fish_list = None  # Default to None to prevent errors on first load
+
+#     if request.method == "POST":
+#         try:
+#             user_ph = float(request.POST.get("ph"))
+#             user_temp = float(request.POST.get("temperature"))
+#             user_hardness = request.POST.get("hardness")
+
+#             # Filter fish based on the entered water parameters
+#             fish_list = FishWaterPreferences.objects.filter(
+#                 min_ph__lte=user_ph, max_ph__gte=user_ph,
+#                 min_temp__lte=user_temp, max_temp__gte=user_temp,
+#                 hardness=user_hardness
+#             )
+
+#         except Exception as e:
+#             print(f"Error: {e}")  # Debugging in console
+
+#     return render(request, "water_quality.html", {"fish_list": fish_list})
+
+
+
+
+# views.py
+from django.shortcuts import render
+import joblib
+import pandas as pd
+from sklearn.neighbors import NearestNeighbors
+
+# Load the pre-trained model
+MODEL_PATH = "ml_models/fish_recommendation.pkl"
+model = joblib.load(MODEL_PATH)
+df = pd.read_csv("fish_dataset.csv")
+print("CSV file loaded successfully!")
+print(df.head())
+  # Update this path as needed
+
+def recommend_fish(min_ph, max_ph, min_temp, max_temp, hardness):
+    input_data = pd.DataFrame([[min_ph, max_ph, min_temp, max_temp, hardness]], 
+                               columns=['Min pH', 'Max pH', 'Min Temp', 'Max Temp', 'Hardness'])
+    
+    # Check if input_data is correctly formatted
+    print(f"Input data for prediction: {input_data}")
+
+    # Use the model to predict the closest fish species
+    distances, indices = model.kneighbors(input_data)
+
+    # Check if the model is returning valid indices and distances
+    print(f"Distances: {distances}")
+    print(f"Indices: {indices}")
+    
+    # Get the recommended fish based on the closest matches
+    recommended_fish = df.iloc[indices[0]]  # Get the rows corresponding to the indices
+
+    # Rename columns to remove spaces and make them template-friendly
+    recommended_fish = recommended_fish.rename(columns={
+        'Fish Name': 'fish_name',
+        'Min pH': 'min_ph',
+        'Max pH': 'max_ph',
+        'Min Temp': 'min_temp',
+        'Max Temp': 'max_temp',
+        'Hardness': 'hardness',
+        'Description': 'description'
+    })
+
+    # Debugging: Print the recommended fish after renaming columns
+    print(f"Recommended fish after renaming columns: {recommended_fish}")
+    
+    return recommended_fish
+
+
+def water_quality_analyzer(request):
+    fish_list = None
+    error = None
+
+    if request.method == 'POST':
+        try:
+            min_ph = float(request.POST.get('ph'))
+            max_ph = min_ph  # Assuming min and max are the same
+            min_temp = float(request.POST.get('temperature'))
+            max_temp = min_temp  # Assuming min and max are the same
+            hardness = request.POST.get('hardness')
+
+            # Map hardness to numeric value
+            hardness_map = {'soft': 1, 'medium': 2, 'hard': 3}
+            hardness_value = hardness_map.get(hardness)
+
+            # Get recommended fish
+            fish_list = recommend_fish(min_ph, max_ph, min_temp, max_temp, hardness_value)
+            print(f"Fish list: {fish_list}")  # Debugging statement
+
+        except Exception as e:
+            error = f"Error: {e}"
+
+    if fish_list is not None:
+        fish_list = fish_list.to_dict(orient="records")
+        print(f"Fish list after conversion: {fish_list}")  # Debugging statement
+
+    return render(request, 'water_quality.html', {'fish_list': fish_list, 'error': error})
+
+
+
+
+
