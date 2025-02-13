@@ -218,3 +218,18 @@ class FishWaterPreferences(models.Model):
 
     def __str__(self):
         return self.fish_name
+    
+
+    from django.db import models
+
+class FishCareGuide(models.Model):
+    fish_name = models.CharField(max_length=255, unique=True)
+    maintenance = models.TextField()
+    feeding_habits = models.TextField()
+    water_quality = models.TextField()
+    additional_tips = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='fish_care_images/', blank=True, null=True)
+
+    def __str__(self):
+        return self.fish_name
+
