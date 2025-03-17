@@ -1,0 +1,24 @@
+{% extends 'index.html' %}
+{% block body %}
+<div class="container mt-5">
+    <h2 class="mb-4">Fish Care Guides</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Fish Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for guide in guides %}
+            <tr>
+                <td>{{ guide.fish_name }}</td>
+                <td>
+                    <a href="{% url 'generate_pdf' guide.id %}" class="btn btn-success">Download PDF</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

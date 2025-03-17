@@ -1,0 +1,46 @@
+    {% extends 'newindex.html' %}
+
+    {% block body %}
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">🐠 Find a Fish 🐟</h2>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card p-4 shadow-lg rounded bg-light">
+                    <form method="GET" action="{% url 'get_fish' %}">
+                        <div class="input-group">
+                            <input type="text" name="fish_name" class="form-control" 
+                                placeholder="Enter Fish Name..." value="{{ request.GET.fish_name|default_if_none:'' }}" required>
+                            <button type="submit" class="btn btn-primary">🔍 Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% if invalid_query %}
+            <div class="alert alert-warning text-center mt-4">
+                ⚠️ Please enter a valid fish name.
+            </div>
+        {% elif error %}
+            <div class="alert alert-danger text-center mt-4">
+                ❌ {{ error }}
+            </div>
+        {% elif fish_data %}
+            <div class="mt-4 text-center">
+                <div class="card p-4 shadow-lg rounded">
+                    <h4 class="fw-bold">{{ fish_data.title }}</h4>
+                    {% if fish_data.image %}
+                        <img src="{{ fish_data.image }}" class="img-fluid rounded mb-3" style="max-width: 300px;">
+                    {% endif %}
+                    <p>{{ fish_data.summary }}</p>
+                    <a href="{{ fish_data.url }}" target="_blank" class="btn btn-info">Read more on Wikipedia</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-danger text-center mt-4">
+                ❌ No information found for this fish.
+            </div>
+        {% endif %}
+    </div>
+    {% endblock %}

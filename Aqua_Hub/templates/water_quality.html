@@ -21,17 +21,17 @@
         <form method="post">
             {% csrf_token %}
             <label>Enter pH Level (5-8):</label>
-            <input type="number" name="ph" step="0.1" min="5" max="8" class="form-control" 
+            <input type="number" name="ph" step="0.1" min="5" max="8" id="ph" class="form-control" 
                    value="{{ request.POST.ph }}" required>
 
             <label class="mt-3">Enter Water Temperature (°C) (17-31):</label>
-            <input type="number" name="temperature" step="0.1" min="17" max="31" class="form-control" 
+            <input type="number" name="temperature" step="0.1" min="17" max="31" id="temp" class="form-control" 
                    value="{{ request.POST.temperature }}" required>
 
             <!-- Hidden Water Hardness Input (disabled but still passed to the backend) -->
             <input type="hidden" name="hardness" value="medium">
 
-            <button type="submit" class="btn btn-success mt-3">Analyze</button>
+            <button type="submit" id="analyze" class="btn btn-success mt-3">Analyze</button>
         </form>
     </div>
 

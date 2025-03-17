@@ -1,0 +1,67 @@
+{% extends 'newindex.html' %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="text-center">🐟 Fish Compatibility Checker 🐠</h2>
+
+    <form method="POST" class="mb-4">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-5">
+                <label for="fish1">Select First Fish:</label>
+                <select name="fish1" id="fish1" class="form-control" required>
+                    <option value="">-- Select Fish --</option>
+                    {% for fish in fish_list %}
+                        <option value="{{ fish }}">{{ fish }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="fish2">Select Second Fish:</label>
+                <select name="fish2" id="fish2" class="form-control" required>
+                    <option value="">-- Select Fish --</option>
+                    {% for fish in fish_list %}
+                        <option value="{{ fish }}">{{ fish }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" id="check" class="btn btn-primary w-100">🔍 Check</button>
+            </div>
+        </div>
+    </form>
+
+    {% if result is not None %}
+        <div class="mt-4 text-center">
+            {% if result %}
+                <h4 class="text-success">✅ The selected fishes are compatible!</h4>
+            {% else %}
+                <h4 class="text-danger">❌ The selected fishes are not compatible!</h4>
+            {% endif %}
+            <p><strong>Reason:</strong> {{ compatibility_reason }}</p>
+            <p><strong>Compatibility Score:</strong> {{ compatibility_score }}</p>
+        </div>
+
+        <!-- Fish Details Section (Only Temperament & Water Type) -->
+        <div class="table-responsive mt-4">
+            <table class="table table-bordered text-center">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Feature</th>
+                        <th>{{ fish1_details.Fish_Name }}</th>
+                        <th>{{ fish2_details.Fish_Name }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Temperament</strong></td>
+                        <td>{{ fish1_details.Temperament }}</td>
+                        <td>{{ fish2_details.Temperament }}</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

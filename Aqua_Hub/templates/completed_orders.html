@@ -17,6 +17,7 @@
                     <th>Order Date</th>
                     <th>Delivery Address</th>
                     <th>Status</th>
+                    <th>Delivery Status</th>  <!-- New Column Added -->
                     <th>Rate This Product</th>
                 </tr>
             </thead>
@@ -38,6 +39,22 @@
                     </td>
                     <td>
                         <span class="badge bg-success">Order Confirmed</span>
+                    </td>
+                    <td>
+                        <!-- Delivery Status Display -->
+                        <span class="badge 
+                            {% if order.delivery_status == 'Delivered' %}
+                                bg-success
+                            {% elif order.delivery_status == 'Out for Delivery' %}
+                                bg-warning
+                            {% elif order.delivery_status == 'Pending' %}
+                                bg-secondary
+                            {% else %}
+                                bg-danger
+                            {% endif %}
+                        ">
+                            {{ order.delivery_status }}
+                        </span>
                     </td>
                     <td>
                         <!-- Rating Button -->

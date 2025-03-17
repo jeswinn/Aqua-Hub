@@ -1,0 +1,16 @@
+<!-- admin_order_assignment.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Assign Delivery Person</h2>
+<form method="post">
+    {% csrf_token %}
+    <label for="delivery_person">Select Delivery Person:</label>
+    <select name="delivery_person" required>
+        <option value="">-- Choose a Delivery Person --</option>
+        {% for person in delivery_persons %}
+            <option value="{{ person.id }}">{{ person.name }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Assign</button>
+</form>
+{% endblock %}

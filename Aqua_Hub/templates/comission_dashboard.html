@@ -1,0 +1,92 @@
+{% extends 'deliverydash.html' %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Completed Orders & Commission</h2>
+
+    <!-- Order Table -->
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered text-center">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>Total Price (₹)</th>
+                    <th>Commission (₹)</th>
+                    <th>Completed Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in completed_orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.address.full_name }}</td>
+                    <td>₹{{ order.total_price|default:0|floatformat:2 }}</td>
+                    <td>₹{{ order.commission_amount|default:0|floatformat:2 }}</td>
+                    <td>{{ order.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">No completed orders yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Total Summary -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm p-3 text-center bg-light">
+                <h5 class="text-success font-weight-bold">Total Earnings</h5>
+                <h3 class="text-primary">₹{{ total_price|default:0|floatformat:2 }}</h3>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm p-3 text-center bg-light">
+                <h5 class="text-danger font-weight-bold">Total Commission</h5>
+                <h3 class="text-warning">₹{{ total_commission|default:0|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Visualization -->
+    <div class="mt-5">
+        <canvas id="commissionChart"></canvas>
+    </div>
+</div>
+
+<!-- Chart.js for visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var ctx = document.getElementById('commissionChart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [{% for order in completed_orders %} "Order {{ order.id }}", {% endfor %}],
+                datasets: [{
+                    label: 'Commission (₹)',
+                    data: [{% for order in completed_orders %} {{ order.commission_amount|default:0 }}, {% endfor %}],
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Commission Amount (₹)'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

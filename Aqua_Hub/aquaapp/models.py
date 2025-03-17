@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
+
 # Create your models here.
 class userreg(User):
     phone_number = models.CharField(max_length=15, unique=True)
@@ -131,6 +133,23 @@ class Complaint(models.Model):
     def __str__(self):
         return f"Complaint by {self.user.username} against {self.seller.shop_name}"
     
+class DeliveryPerson(models.Model):
+    username = models.CharField(max_length=150, unique=True)
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=255)  # Will be hashed
+    contact_number = models.CharField(max_length=10)
+    vehicle_details = models.TextField(blank=True, null=True)
+    status = models.BooleanField(default=True)  # Active/Inactive
+    address = models.TextField()  # Address field added
+    pin_code = models.CharField(max_length=6)  # Mandatory Pin Code
+    is_active = models.BooleanField(default=False)
+    delivery_status = models.ForeignKey(
+        'Order', on_delete=models.SET_NULL, null=True, blank=True, related_name="delivery_person_status"
+    )
+    
+
+    def __str__(self):
+        return self.username
 
 
 
@@ -169,6 +188,11 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=50, default='Pending')  # Payment status (Pending, Completed, Failed)
     order_status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Confirmed')
     created_at = models.DateTimeField(auto_now_add=True)  # Timestamp of the order creation
+    delivery_person = models.ForeignKey(DeliveryPerson, on_delete=models.SET_NULL, null=True, blank=True)
+    delivery_status = models.CharField(
+        max_length=50,
+        choices=[('Pending', 'Pending'), ('Out for Delivery', 'Out for Delivery'), ('Delivered', 'Delivered')],
+        default='Pending')
 
     def __str__(self):
         return f"Order {self.id} - {self.user.username} - {self.payment_status}"
@@ -222,14 +246,30 @@ class FishWaterPreferences(models.Model):
 
     from django.db import models
 
+class FishCare(models.Model):
+    name = models.CharField(max_length=255, unique=True)  # Fish species name
+    scientific_name = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField()  # General information
+    tank_requirements = models.TextField()  # Water quality, pH levels, temperature, etc.
+    diet = models.TextField()  # Feeding habits
+    compatibility = models.TextField()  # Can it live with other species?
+    common_diseases = models.TextField()  # Health concerns
+    image = models.ImageField(upload_to='fish_care_images/', blank=True, null=True)
+    
+    def __str__(self):
+        return self.name
+    
 class FishCareGuide(models.Model):
-    fish_name = models.CharField(max_length=255, unique=True)
-    maintenance = models.TextField()
+    fish_name = models.CharField(max_length=100)
+    description = models.TextField()
     feeding_habits = models.TextField()
     water_quality = models.TextField()
-    additional_tips = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to='fish_care_images/', blank=True, null=True)
+    fish_image = models.ImageField(upload_to='fish_images/')
+    additional_notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.fish_name
+
+
 

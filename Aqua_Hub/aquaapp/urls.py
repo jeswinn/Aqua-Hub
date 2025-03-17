@@ -19,6 +19,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from . views import *
+from aquaapp.views import delivery_login  # Import the view function
+
 
 urlpatterns = [
     path('',index_view, name='index'),
@@ -82,6 +84,26 @@ urlpatterns = [
       path('remove_from_wishlist/<int:product_id>/',remove_from_wishlist,name='remove_from_wishlist'),
     #   path("analyze_water/", analyze_water, name="analyze_water"),
       path('water-quality-analyzer/', water_quality_analyzer, name='water_quality_analyzer'),
+      path("fish-compatibility/", check_compatibility, name="fish_compatibility"),
+        path("plant-compatibility/", get_fish_details, name="get_fish"),
+        path('find_fish/', fish_search_page, name='find_fish'),
+         path('create/', create_care_guide, name='create_care_guide'),
+       path('list/', care_guide_list, name='care_guide_list'),
+    path('generate-pdf/<int:guide_id>/', generate_pdf, name='generate_pdf'),
+     path('register/', register_delivery_person, name='register_delivery_person'),
+    # path('logout/', delivery_person_logout, name='delivery_person_logout'),
+    # path('assign/<int:order_id>/', assign_delivery_person, name='assign_delivery_person'),
+    # path('update-status/<int:order_id>/', update_delivery_status, name='update_delivery_status'),
+    # path('track/<int:order_id>/', track_order, name='track_order'),
+    path('manage-delivery/', manage_delivery_persons, name='manage_delivery'),
+    path('approve-delivery/<int:delivery_id>/', approve_delivery_person, name='approve_delivery'),
+    path('reject-delivery/<int:delivery_id>/', reject_delivery_person, name='reject_delivery'),
+     path('dashboard/', delivery_dashboard, name='delivery_dashboard'),
+     path("delivery-login/", delivery_login, name="delivery_login"),
+     path("update-order-status/", update_order_status, name="update_order_status"),
+     path("comission/",commission_dashboard, name="commission_dashboard")
+   
+   
 ]
      
 

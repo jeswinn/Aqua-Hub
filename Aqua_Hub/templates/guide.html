@@ -1,0 +1,61 @@
+{% extends 'newindex.html' %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="mb-4 text-center">Create Fish Care Guide</h2>
+        <form method="post" enctype="multipart/form-data" id="fish-care-form">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="fish-name">Fish Species Name:</label>
+                        <input type="text" id="fish-name" name="fish_name" class="form-control" placeholder="Enter fish species name" required pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="fish-image">Upload Fish Image:</label>
+                        <input type="file" id="fish-image" name="fish_image" class="form-control-file" accept="image/*" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" class="form-control" rows="4" placeholder="Provide a brief description of the fish" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="feeding-habits">Feeding Habits:</label>
+                <textarea id="feeding-habits" name="feeding_habits" class="form-control" rows="4" placeholder="Describe the feeding habits" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="water-quality">Water Quality Requirements:</label>
+                <textarea id="water-quality" name="water_quality" class="form-control" rows="4" placeholder="Specify water pH, temperature, etc." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Additional Notes:</label>
+                <textarea id="notes" name="additional_notes" class="form-control" rows="3" placeholder="Optional notes about fish care"></textarea>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-success btn-lg">Save Guide</button>
+                <a href="{% url 'care_guide_list' %}" class="btn btn-primary btn-lg ml-3">View Care Guides</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("fish-care-form").addEventListener("submit", function(event) {
+        const fishName = document.getElementById("fish-name").value.trim();
+        if (fishName.length < 3) {
+            alert("Fish name must be at least 3 characters long.");
+            event.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

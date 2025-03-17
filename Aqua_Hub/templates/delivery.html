@@ -1,0 +1,91 @@
+{% extends 'deliverydash.html' %} 
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="text-center">Delivery Orders</h2>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>Phone Number</th>
+                    <th>Secondary Number</th>
+                    <th>Address</th>
+                    <th>Pincode</th>
+                    <th>Status</th>
+                    <th>Update Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr id="order-{{ order.id }}">
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.address.full_name }}</td>
+                    <td>{{ order.address.contact1 }}</td>
+                    <td>{{ order.address.contact2 }}</td>
+                    <td>{{ order.address }}</td>
+                    <td>{{ order.address.pincode }}</td>
+                    <td>
+                        <span class="badge status-badge"
+                            data-order-id="{{ order.id }}"
+                            id="status-badge-{{ order.id }}">
+                            {{ order.delivery_status }}
+                        </span>
+                    </td>
+                    <td>
+                        <select class="form-select order-status" data-order-id="{{ order.id }}">
+                            <option value="Pending" {% if order.delivery_status == "Pending" %}selected{% endif %}>Pending</option>
+                            <option value="Out for Delivery" {% if order.delivery_status == "Out for Delivery" %}selected{% endif %}>Out for Delivery</option>
+                            <option value="Delivered" {% if order.delivery_status == "Delivered" %}selected{% endif %}>Delivered</option>
+                        </select>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- JavaScript for AJAX Status Update -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".order-status").forEach(select => {
+            select.addEventListener("change", function () {
+                let orderId = this.getAttribute("data-order-id");
+                let newStatus = this.value;
+                let statusBadge = document.getElementById(`status-badge-${orderId}`);
+
+                fetch("{% url 'update_order_status' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: new URLSearchParams({order_id: orderId, status: newStatus})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update status badge dynamically
+                        statusBadge.textContent = newStatus;
+                        statusBadge.className = "badge status-badge";
+
+                        if (newStatus === "Pending") {
+                            statusBadge.classList.add("bg-secondary");
+                        } else if (newStatus === "Out for Delivery") {
+                            statusBadge.classList.add("bg-warning");
+                        } else if (newStatus === "Delivered") {
+                            statusBadge.classList.add("bg-success");
+                        }
+                    } else {
+                        alert("Failed to update order status.");
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+        });
+    });
+</script>
+
+{% endblock %}

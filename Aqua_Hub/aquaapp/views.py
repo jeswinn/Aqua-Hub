@@ -25,9 +25,15 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
+from django.db.models import Sum
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.apps import apps
+from .models import Order
+from decimal import Decimal
+Order = apps.get_model('aquaapp', 'Order')
+DeliveryPerson =apps.get_model('aquaapp', 'DeliveryPerson')
 
 
 
@@ -1560,6 +1566,461 @@ def water_quality_analyzer(request):
     return render(request, 'water_quality.html', {'fish_list': fish_list, 'error': error})
 
 
+import pandas as pd
+import os
+from django.shortcuts import render
+from django.conf import settings
+
+# Load the trained dataset
+DATA_PATH = os.path.join(r"C:\Users\jeswi\Desktop\jeswinn\Aqua-Hub\Aqua_Hub\comb.csv")
+ # Adjust path if needed
+fish_data = pd.read_csv(DATA_PATH)
+
+# Function to check compatibility between two fish
+def check_fish_compatibility(fish1, fish2):
+    fish1_data = fish_data[fish_data["Fish Name"] == fish1].iloc[0]
+    fish2_data = fish_data[fish_data["Fish Name"] == fish2].iloc[0]
+
+    # Compatibility Conditions
+    same_water_type = fish1_data["Water Type"] == fish2_data["Water Type"]
+    similar_ph = not (fish1_data["pH Max"] < fish2_data["pH Min"] or fish2_data["pH Max"] < fish1_data["pH Min"])
+    similar_temp = not (fish1_data["Temperature Max"] < fish2_data["Temperature Min"] or fish2_data["Temperature Max"] < fish1_data["Temperature Min"])
+    temperament_compatible = not (fish1_data["Temperament"] == "Aggressive" or fish2_data["Temperament"] == "Aggressive")
+
+    compatibility_score = fish1_data["Compatibility Score"] + fish2_data["Compatibility Score"]
+
+    # Final Decision
+    compatible = same_water_type and similar_ph and similar_temp and temperament_compatible and compatibility_score > 2
+    return compatible
+
+def check_compatibility(request):
+    fish_list = fish_data["Fish Name"].tolist()
+    result = None
+    fish1_details = None
+    fish2_details = None
+    compatibility_reason = ""
+    compatibility_score = 0  # Default score
+
+    if request.method == "POST":
+        fish1 = request.POST.get("fish1")
+        fish2 = request.POST.get("fish2")
+
+        if fish1 and fish2:
+            fish1_data = fish_data[fish_data["Fish Name"] == fish1]
+            fish2_data = fish_data[fish_data["Fish Name"] == fish2]
+
+            if not fish1_data.empty and not fish2_data.empty:
+                fish1_details = fish1_data.iloc[0].to_dict()
+                fish2_details = fish2_data.iloc[0].to_dict()
+
+                # Extract key attributes
+                fish1_temp = fish1_details["Temperament"]
+                fish2_temp = fish2_details["Temperament"]
+                fish1_water = fish1_details["Water Type"]
+                fish2_water = fish2_details["Water Type"]
+                fish1_score = fish1_details["Compatibility Score"]
+                fish2_score = fish2_details["Compatibility Score"]
+
+                # Compatibility calculation
+                compatibility_score = (fish1_score + fish2_score) / 2
+
+                # Compatibility Logic
+                if fish1_temp == "Aggressive" and fish2_temp == "Peaceful":
+                    result = False
+                    compatibility_reason = f"{fish1} is aggressive, while {fish2} is peaceful. They may not coexist safely."
+                elif fish1_temp == "Peaceful" and fish2_temp == "Aggressive":
+                    result = False
+                    compatibility_reason = f"{fish2} is aggressive, while {fish1} is peaceful. They may not coexist safely."
+                elif fish1_water != fish2_water:
+                    result = False
+                    compatibility_reason = f"{fish1} lives in {fish1_water}, but {fish2} requires {fish2_water}. They need different water conditions."
+                elif compatibility_score > 0:
+                    result = True
+                    compatibility_reason = "These fishes have a good compatibility score and similar water conditions."
+                else:
+                    result = False
+                    compatibility_reason = "These fishes have different needs or aggressive behavior, making them incompatible."
+
+    return render(request, "check_compatibility.html", {
+        "fish_list": fish_list,
+        "result": result,
+        "fish1_details": fish1_details,
+        "fish2_details": fish2_details,
+        "compatibility_reason": compatibility_reason,
+        "compatibility_score": round(compatibility_score, 2),  # Send score to template
+    })
 
 
+from django.shortcuts import render
+from django.http import JsonResponse
+import requests
+
+def fish_search_page(request):
+    """Render the search page initially"""
+    return render(request, 'finding.html')
+
+import requests
+from django.shortcuts import render
+import re
+
+def get_fish_details(request):
+    """Fetch fish details from Wikipedia API and display in the template"""
+    
+    fish_name = request.GET.get('fish_name', '').strip()
+
+    # Validate input: Allow only letters and spaces (to prevent invalid queries)
+    if not fish_name or not re.match(r"^[A-Za-z\s]+$", fish_name):
+        return render(request, 'finding.html', {'invalid_query': True})
+
+    try:
+        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{fish_name}"
+        response = requests.get(url, timeout=5)  # Added timeout to prevent long waits
+        data = response.json()
+
+        # Check if response is valid and contains expected data
+        if response.status_code != 200 or 'title' not in data or 'extract' not in data:
+            return render(request, 'finding.html', {'error': 'No details found for this fish.'})
+
+        fish_data = {
+            'title': data.get('title', ''),
+            'summary': data.get('extract', 'No description available.'),
+            'image': data.get('thumbnail', {}).get('source', ''),
+            'url': data.get('content_urls', {}).get('desktop', {}).get('page', '#')
+        }
+
+        return render(request, 'finding.html', {'fish_data': fish_data})
+
+    except requests.exceptions.Timeout:
+        return render(request, 'finding.html', {'error': 'Request timed out. Please try again.'})
+
+    except requests.exceptions.RequestException as e:
+        return render(request, 'finding.html', {'error': f'Something went wrong: {str(e)}'})
+
+
+# views.py
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from .models import FishCareGuide
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from io import BytesIO
+
+def create_care_guide(request):
+    if request.method == 'POST':
+        fish_name = request.POST.get('fish_name')
+        description = request.POST.get('description')
+        feeding_habits = request.POST.get('feeding_habits')
+        water_quality = request.POST.get('water_quality')
+        additional_notes = request.POST.get('additional_notes')
+        fish_image = request.FILES.get('fish_image')
+
+        guide = FishCareGuide(
+            fish_name=fish_name,
+            description=description,
+            feeding_habits=feeding_habits,
+            water_quality=water_quality,
+            fish_image=fish_image,
+            additional_notes=additional_notes
+        )
+        guide.save()
+
+        # Auto-generate and save PDF
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(30, 750, f"Fish Care Guide: {guide.fish_name}")
+        p.setFont("Helvetica", 12)
+        p.drawString(30, 720, f"Description: {guide.description}")
+        p.drawString(30, 700, f"Feeding Habits: {guide.feeding_habits}")
+        p.drawString(30, 680, f"Water Quality: {guide.water_quality}")
+        p.drawString(30, 660, f"Additional Notes: {guide.additional_notes}")
+
+        p.showPage()
+        p.save()
+
+        pdf_path = f'static/pdfs/{guide.fish_name}_guide.pdf'
+        with open(pdf_path, 'wb') as f:
+            f.write(buffer.getvalue())
+
+        return redirect('care_guide_list')  
+
+    return render(request, 'guide.html')
+
+from io import BytesIO
+from django.http import HttpResponse
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Image, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+import os
+
+def generate_pdf(request, guide_id):
+    # Retrieve guide
+    guide = FishCareGuide.objects.get(id=guide_id)
+    buffer = BytesIO()
+    pdf_filename = f"{guide.fish_name}_Care_Guide.pdf"
+    
+    # Create the document with a specified page size
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    styles = getSampleStyleSheet()
+    # Add custom style for table cells if needed
+    custom_body = ParagraphStyle(
+        name="CustomBody",
+        parent=styles["BodyText"],
+        fontSize=10,
+        leading=12,
+        spaceAfter=6,
+    )
+
+    # Container for the PDF elements
+    content = []
+
+    # Title
+    title = Paragraph(f"<b>Fish Care Guide: {guide.fish_name}</b>", styles["Title"])
+    content.append(title)
+    content.append(Spacer(1, 12))
+
+    # Prepare image if available
+    image_path = guide.fish_image.path if guide.fish_image else None
+    image_obj = None
+    if image_path and os.path.exists(image_path):
+        # Adjust width/height as needed
+        image_obj = Image(image_path, width=200, height=150)
+        image_obj.hAlign = 'CENTER'
+    
+    # Build content table data with two columns (Image and Details)
+    # First, build the details as a list of Paragraphs
+    details = []
+    details.append(Paragraph(f"<b>Description:</b> {guide.description}", custom_body))
+    details.append(Paragraph(f"<b>Feeding Habits:</b> {guide.feeding_habits}", custom_body))
+    details.append(Paragraph(f"<b>Water Quality Requirements:</b> {guide.water_quality}", custom_body))
+    if guide.additional_notes:
+        details.append(Paragraph(f"<b>Additional Notes:</b> {guide.additional_notes}", custom_body))
+    
+    # Organize the layout: if an image exists, show image on left and details on right; otherwise, full width details.
+    if image_obj:
+        table_data = [[image_obj, details]]
+        col_widths = [220, 300]
+    else:
+        table_data = [[details]]
+        col_widths = [520]
+    
+    table = Table(table_data, colWidths=col_widths, hAlign='CENTER')
+    table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 2, colors.black),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TOPPADDING', (0,0), (-1,-1), 10),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+    ]))
+    
+    content.append(table)
+    content.append(Spacer(1, 12))
+    
+    # Optionally, add a footer line or signature area
+    footer = Paragraph("Generated by Fish Care Guide App", styles["Italic"])
+    content.append(Spacer(1, 24))
+    content.append(footer)
+
+    # Build PDF
+    doc.build(content)
+    
+    # Return as downloadable response
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{pdf_filename}"'
+    return response
+
+
+def care_guide_list(request):
+    guides = FishCareGuide.objects.all()
+    return render(request, 'guide_list.html', {'guides': guides})
+
+
+
+
+from django.contrib.auth.hashers import make_password
+
+def register_delivery_person(request):
+    if request.method == 'POST':
+        name = request.POST['username']
+        email = request.POST['email']
+        password = request.POST['password']
+        contact_number = request.POST['contact_number']
+        address = request.POST['address']
+        pincode = request.POST['pincode']
+        vehicle_number = request.POST['vehicle_number']
+        
+        if DeliveryPerson.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered')
+        else:
+            delivery_person = DeliveryPerson.objects.create(
+                username=name,
+                email=email,
+                contact_number=contact_number,
+                password=make_password(password),
+                address=address,
+                pin_code=pincode,
+                vehicle_details=vehicle_number,
+            )
+            messages.success(request, 'Registration successful, you can log in now')
+            return redirect('register_delivery_person')
+    
+    return render(request, 'regis.html')
+
+
+# # Login Delivery Person
+# def delivery_person_login(request):
+#     if request.method == 'POST':
+#         email = request.POST['email']
+#         password = request.POST['password']
+#         delivery_person = authenticate(request, username=email, password=password)
+        
+#         if delivery_person is not None:
+#             login(request, delivery_person)
+#             return redirect('delivery_dashboard')
+#         else:
+#             messages.error(request, 'Invalid credentials')
+    
+#     return render(request, 'regis.html')
+
+# # Logout Delivery Person
+# def delivery_person_logout(request):
+#     logout(request)
+#     return redirect('delivery_person_login')
+
+# # Assign Order to Delivery Person
+# @login_required
+# def assign_delivery_person(request, order_id):
+#     order = Order.objects.get(id=order_id)
+#     delivery_persons = DeliveryPerson.objects.all()
+    
+#     if request.method == 'POST':
+#         delivery_person_id = request.POST['delivery_person']
+#         delivery_person = DeliveryPerson.objects.get(id=delivery_person_id)
+#         order.delivery_person = delivery_person
+#         order.delivery_status = 'Out for Delivery'
+#         order.save()
+#         messages.success(request, 'Delivery person assigned successfully')
+#         return redirect('admin_dashboard')
+    
+#     return render(request, 'order_assignment.html', {'order': order, 'delivery_persons': delivery_persons})
+
+# # Delivery Person Dashboard
+
+
+# # Update Delivery Status
+# @login_required
+# def update_delivery_status(request, order_id):
+#     order = Order.objects.get(id=order_id)
+    
+#     if request.method == 'POST':
+#         order.delivery_status = request.POST['status']
+#         order.save()
+#         messages.success(request, 'Delivery status updated')
+#         return redirect('delivery_dashboard')
+    
+#     return redirect('delivery_dashboard')
+
+# # Order Tracking
+# def track_order(request, order_id):
+#     order = Order.objects.get(id=order_id)
+#     return render(request, 'order_tracking.html', {'order': order})
+
+
+
+
+def manage_delivery_persons(request):
+    pending_delivery_persons = DeliveryPerson.objects.filter(is_active=False)  # Show pending registrations
+    approved_delivery_persons = DeliveryPerson.objects.filter(is_active=True)  # Show approved delivery persons
+
+    context = {
+        'pending_delivery_persons': pending_delivery_persons,
+        'approved_delivery_persons': approved_delivery_persons,
+    }
+    return render(request, 'deliveryappr.html', context)
+
+def approve_delivery_person(request, delivery_id):
+    delivery_person = get_object_or_404(DeliveryPerson, id=delivery_id)
+    delivery_person.is_active = True  # Mark as active
+    delivery_person.save()
+    messages.success(request, f"{delivery_person.username} has been approved.")
+    return redirect('manage_delivery')
+
+def reject_delivery_person(request, delivery_id):
+    if request.method == "POST":
+        reason = request.POST.get('reason', '')
+        delivery_person = get_object_or_404(DeliveryPerson, id=delivery_id)
+        delivery_person.delete()  # Remove the rejected applicant
+        messages.error(request, f"Delivery person {delivery_person.username} was rejected. Reason: {reason}")
+        return redirect('manage_delivery')
+    
+def delivery_login(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        try:
+            user = DeliveryPerson.objects.get(username=username)  # Simple authentication
+            if user.is_active:
+                if check_password(password, user.password):
+                    request.session["delivery_id"] = user.username  # Store user ID in session
+                    return redirect("delivery_dashboard")  # Redirect to the dashboard
+            else:
+                messages.error(request, "Your account is inactive. Contact support.")
+        except DeliveryPerson.DoesNotExist:
+            messages.error(request, "Invalid username or password")
+
+    return render(request, "dlogin.html")
+
+def delivery_dashboard(request):
+    if request.session["delivery_id"]:
+        delivery = DeliveryPerson.objects.get(username=request.session['delivery_id'])
+        print(delivery.pin_code)
+        # address = UserAddress.objects.filter(pincode=delivery.pin_code)   
+        orders = Order.objects.filter(address__pincode=delivery.pin_code)
+        return render(request, 'delivery.html', {'orders': orders})
+    else:
+        return redirect('delivery_login')
+    
+@csrf_exempt  # Allows POST requests without CSRF token issues
+def update_order_status(request):
+    if request.method == "POST":
+        order_id = request.POST.get("order_id")
+        new_status = request.POST.get("status")
+
+        order = get_object_or_404(Order, id=order_id)
+        order.delivery_status = new_status  # Assuming `delivery_status` is the field
+        order.save()
+
+        return JsonResponse({"success": True, "new_status": new_status})
+
+    return JsonResponse({"success": False, "error": "Invalid request"})
+
+
+def commission_dashboard(request):
+    completed_orders = Order.objects.filter(delivery_status="Delivered")
+
+    for order in completed_orders:
+        order.commission_amount = Decimal(20) + (order.total_price * Decimal('0.05'))  # ₹20 + 5% of total price
+
+    return render(request, 'comission_dashboard.html', {'completed_orders': completed_orders})
+
+def completed_orders_view(request):
+    # Fetch completed orders
+    completed_orders = Order.objects.filter(status='Completed')
+
+    # Calculate total price and total commission
+    total_price = completed_orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
+    total_commission = completed_orders.aggregate(Sum('commission_amount'))['commission_amount__sum'] or 0
+
+    context = {
+        'completed_orders': completed_orders,
+        'total_price': total_price,
+        'total_commission': total_commission,
+    }
+
+    return render(request, 'comission_dashboard.html', context)
 

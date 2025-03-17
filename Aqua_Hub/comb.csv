@@ -1,0 +1,46 @@
+Fish Name,Water Type,Temperament,Size Category,pH Min,pH Max,Temperature Min,Temperature Max,Compatibility Score
+Goldfish,Freshwater,Peaceful,Medium,6.0,8.0,18,22,2
+Betta Fish,Freshwater,Aggressive,Small,6.5,7.5,24,28,1
+Guppy,Freshwater,Peaceful,Small,6.5,8.5,22,28,2
+Molly,Freshwater,Peaceful,Small,7.0,8.5,24,28,2
+Platy,Freshwater,Peaceful,Small,7.0,8.5,22,28,2
+Angelfish,Freshwater,Semi-Aggressive,Medium,6.5,7.5,24,28,1
+Oscar,Freshwater,Aggressive,Large,6.0,8.0,24,28,0
+Discus,Freshwater,Peaceful,Large,6.0,7.5,26,30,1
+Neon Tetra,Freshwater,Peaceful,Small,6.0,7.5,22,26,2
+Cardinal Tetra,Freshwater,Peaceful,Small,5.0,7.5,23,27,2
+Corydoras Catfish,Freshwater,Peaceful,Small,6.5,7.5,22,26,2
+Zebra Danio,Freshwater,Peaceful,Small,6.5,7.5,18,24,2
+Rainbowfish,Freshwater,Peaceful,Medium,6.5,8.0,24,28,2
+Koi,Freshwater,Peaceful,Large,6.5,8.0,15,25,1
+Arowana,Freshwater,Aggressive,Large,6.0,7.5,24,30,0
+Clown Loach,Freshwater,Peaceful,Medium,6.5,7.5,24,30,2
+Tiger Barb,Freshwater,Semi-Aggressive,Small,6.0,7.5,22,26,1
+Cherry Barb,Freshwater,Peaceful,Small,6.0,7.5,22,26,2
+Dwarf Gourami,Freshwater,Peaceful,Small,6.0,7.5,24,28,2
+Pearl Gourami,Freshwater,Peaceful,Medium,6.0,7.5,24,28,2
+Siamese Algae Eater,Freshwater,Peaceful,Medium,6.5,7.5,24,28,2
+Bristlenose Pleco,Freshwater,Peaceful,Medium,6.5,7.5,22,28,2
+Jack Dempsey,Freshwater,Aggressive,Large,6.0,7.5,24,28,0
+Convict Cichlid,Freshwater,Aggressive,Medium,6.5,7.5,24,28,0
+African Cichlid,Freshwater,Aggressive,Medium,7.5,8.5,24,28,0
+Green Terror,Freshwater,Aggressive,Large,6.5,8.0,24,28,0
+Bala Shark,Freshwater,Peaceful,Large,6.5,8.0,22,28,1
+Silver Dollar,Freshwater,Peaceful,Large,6.0,7.5,24,28,1
+Clownfish,Saltwater,Peaceful,Small,7.8,8.4,24,28,2
+Yellow Tang,Saltwater,Peaceful,Medium,8.1,8.4,24,28,2
+Blue Tang,Saltwater,Peaceful,Medium,8.1,8.4,24,28,2
+Mandarinfish,Saltwater,Peaceful,Small,8.1,8.4,24,28,2
+Royal Gramma,Saltwater,Peaceful,Small,8.1,8.4,24,28,2
+Firefish Goby,Saltwater,Peaceful,Small,8.1,8.4,24,28,2
+Dottyback,Saltwater,Semi-Aggressive,Small,8.1,8.4,24,28,1
+Hawkfish,Saltwater,Aggressive,Medium,8.1,8.4,24,28,0
+Triggerfish,Saltwater,Aggressive,Large,8.1,8.4,24,28,0
+Lionfish,Saltwater,Aggressive,Large,8.1,8.4,24,28,0
+Pufferfish,Saltwater,Aggressive,Medium,8.1,8.4,24,28,0
+Moorish Idol,Saltwater,Peaceful,Large,8.1,8.4,24,28,1
+Butterflyfish,Saltwater,Peaceful,Medium,8.1,8.4,24,28,2
+Cardinalfish,Saltwater,Peaceful,Small,8.1,8.4,24,28,2
+Anthias,Saltwater,Peaceful,Small,8.1,8.4,24,28,2
+Wrasse,Saltwater,Semi-Aggressive,Medium,8.1,8.4,24,28,1
+Eel,Saltwater,Aggressive,Large,8.1,8.4,24,28,0
