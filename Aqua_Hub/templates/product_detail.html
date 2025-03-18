@@ -14,23 +14,28 @@
         <div class="col-md-6">
             <div class="product-details">
                 <h2 class="text-primary">{{ product.product_name }}</h2>
-                <h1 class="text-muted">{{ product.description }}</h1> <!-- Added product description -->
+
+                <!-- Styled Product Description -->
+                <p class="text-muted" style="font-size: 1.2rem; font-style: italic; color: #555; line-height: 1.6;">
+                    {{ product.description }}
+                </p>
+
                 <h4 class="text-success">₹{{ product.price }}</h4>
 
-             <!-- Rating Indicator -->
-<div class="rating-indicator my-2">
-    <span class="text-success fw-bold">{{ average_rating|floatformat:1 }}</span>
-    <span class="stars text-success">
-        {% for i in "12345" %}
-            {% if forloop.counter <= average_rating %}
-                <i class="bi bi-star-fill"></i> <!-- Filled star -->
-            {% else %}
-                <i class="bi bi-star"></i> <!-- Empty star -->
-            {% endif %}
-        {% endfor %}
-    </span>
-    <span class="text-muted">({{ total_reviews }} reviews)</span>
-</div>
+                <!-- Rating Indicator -->
+                <div class="rating-indicator my-2">
+                    <span class="text-success fw-bold">{{ average_rating|floatformat:1 }}</span>
+                    <span class="stars text-success">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= average_rating %}
+                                <i class="bi bi-star-fill"></i> <!-- Filled star -->
+                            {% else %}
+                                <i class="bi bi-star"></i> <!-- Empty star -->
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                    <span class="text-muted">({{ total_reviews }} reviews)</span>
+                </div>
 
                 <!-- Stock Check -->
                 {% if product.stock > 0 %}
@@ -91,7 +96,8 @@
         </div>
     </div>
 
-    <!-- Fish Care Information -->
+    <!-- Fish Care Information - Only for Fish Category -->
+    {% if product.category == "fish" %}
     <div class="row mt-5">
         <div class="col-md-12">
             <div class="card shadow-sm p-4">
@@ -123,6 +129,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- Small Button for Reviews -->
     <div class="text-center mt-4">
@@ -142,7 +149,7 @@
         form.addEventListener('submit', function (event) {
             const selectedQuantity = parseInt(quantityInput.value);
             if (selectedQuantity > maxQuantity) {
-                errorMessage.textContent = Only ${maxQuantity} items in stock. Please select a lower quantity.;
+                errorMessage.textContent = `Only ${maxQuantity} items in stock. Please select a lower quantity.`;
                 errorMessage.style.display = 'block';
                 event.preventDefault(); // Prevent form submission
             } else {
@@ -156,7 +163,7 @@
         bookNowBtn.addEventListener('click', function (event) {
             const selectedQuantity = parseInt(quantityInput.value);
             if (!selectedQuantity || selectedQuantity < 1 || selectedQuantity > maxQuantity) {
-                errorMessage.textContent = Please select a valid quantity between 1 and ${maxQuantity}.;
+                errorMessage.textContent = `Please select a valid quantity between 1 and ${maxQuantity}.`;
                 errorMessage.style.display = 'block';
                 event.preventDefault();
             } else {
