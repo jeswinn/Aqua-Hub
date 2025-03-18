@@ -1,1 +1,35 @@
+# Byte-compiled / cached files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+env/
+*/venv/
+*/env/
+
+# Django specific
+*.log
+db.sqlite3
+*.sqlite3
+*.sqlite
+
+# Ignore migrations cache files
+**/migrations/__pycache__/
+**/migrations/*.pyc
+
+# Environment variables
 .env
+*.env
+
+# Ignore IDE / Editor specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore compiled Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore SQL dump files
+*.sql
