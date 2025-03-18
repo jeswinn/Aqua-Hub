@@ -9,43 +9,43 @@
 
             <div class="input-group">
                 <label for="username"><i class="fas fa-user"></i> Username:</label>
-                <input type="text" id="username" name="username" required oninput="validateName()">
+                <input type="text" id="username" name="username" required>
                 <span class="error" id="nameError"></span>
             </div>
 
             <div class="input-group">
                 <label for="email"><i class="fas fa-envelope"></i> Email:</label>
-                <input type="email" id="email" name="email" required oninput="validateEmail()">
+                <input type="email" id="email" name="email" required>
                 <span class="error" id="emailError"></span>
             </div>
 
             <div class="input-group">
                 <label for="password"><i class="fas fa-lock"></i> Password:</label>
-                <input type="password" id="password" name="password" required oninput="validatePassword()">
+                <input type="password" id="password" name="password" required>
                 <span class="error" id="passwordError"></span>
             </div>
 
             <div class="input-group">
                 <label for="contact_number"><i class="fas fa-phone"></i> Contact Number:</label>
-                <input type="text" id="contact_number" name="contact_number" required oninput="validateContact()">
+                <input type="text" id="contact_number" name="contact_number" required>
                 <span class="error" id="contactError"></span>
             </div>
 
             <div class="input-group">
                 <label for="address"><i class="fas fa-map-marker-alt"></i> Address:</label>
-                <textarea id="address" name="address" required oninput="validateAddress()"></textarea>
+                <textarea id="address" name="address" required></textarea>
                 <span class="error" id="addressError"></span>
             </div>
 
             <div class="input-group">
                 <label for="pincode"><i class="fas fa-map-pin"></i> Pin Code:</label>
-                <input type="text" id="pincode" name="pincode" required oninput="validatePincode()">
+                <input type="text" id="pincode" name="pincode" required>
                 <span class="error" id="pincodeError"></span>
             </div>
 
             <div class="input-group">
                 <label for="vehicle_number"><i class="fas fa-motorcycle"></i> Vehicle Number:</label>
-                <input type="text" id="vehicle_number" name="vehicle_number" required oninput="validateVehicle()">
+                <input type="text" id="vehicle_number" name="vehicle_number" required>
                 <span class="error" id="vehicleError"></span>
             </div>
 
@@ -145,4 +145,37 @@
         font-size: 12px;
     }
 </style>
+
+<script>
+    function validateForm() {
+        let isValid = true;
+
+        let contactNumber = document.getElementById('contact_number').value;
+        let pinCode = document.getElementById('pincode').value;
+        let vehicleNumber = document.getElementById('vehicle_number').value;
+
+        if (!/^[6-9]\d{9}$/.test(contactNumber)) {
+            document.getElementById('contactError').innerText = "Invalid contact number";
+            isValid = false;
+        } else {
+            document.getElementById('contactError').innerText = "";
+        }
+
+        if (!/^\d{6}$/.test(pinCode)) {
+            document.getElementById('pincodeError').innerText = "Invalid pin code";
+            isValid = false;
+        } else {
+            document.getElementById('pincodeError').innerText = "";
+        }
+
+        if (!/^[A-Z]{2}\d{2}[A-Z]{1,2}\d{4}$/.test(vehicleNumber)) {
+            document.getElementById('vehicleError').innerText = "Invalid vehicle number";
+            isValid = false;
+        } else {
+            document.getElementById('vehicleError').innerText = "";
+        }
+
+        return isValid;
+    }
+</script>
 {% endblock %}
