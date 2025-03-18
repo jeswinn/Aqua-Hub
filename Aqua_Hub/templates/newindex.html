@@ -118,12 +118,12 @@
 
                 <!-- Dropdown for username -->
                 <div class="nav-item dropdown ms-auto">
-                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
+                    <a href="#" class="nav-link dropdown-toggle" id="was" data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
                     <div class="dropdown-menu dropdown-menu-end">
                         <a href="{% url 'Profile' %}" class="dropdown-item">Profile</a>
                         <a href="{% url 'wishlist' %}" class="dropdown-item">wishlist</a>
                         <a href="{% url 'logout' %}" class="dropdown-item">Logout</a>
-                        <a href="{% url 'create_care_guide' %}" class="dropdown-item">Care Guides</a>
+                        <a href="{% url 'create_care_guide' %}" id="wass" class="dropdown-item">Care Guides</a>
                     </div>
                 </div>
             </div>
