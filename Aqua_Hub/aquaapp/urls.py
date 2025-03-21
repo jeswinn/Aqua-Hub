@@ -101,7 +101,10 @@ urlpatterns = [
      path('dashboard/', delivery_dashboard, name='delivery_dashboard'),
      path("delivery-login/", delivery_login, name="delivery_login"),
      path("update-order-status/", update_order_status, name="update_order_status"),
-     path("comission/",commission_dashboard, name="commission_dashboard")
+     path("comission/",commission_dashboard, name="commission_dashboard"),
+     path("detect_disease/", disease_detection, name="detect_disease"),
+     path("predict_disease/", predict_disease, name="predict_disease"),
+     
    
    
 ]

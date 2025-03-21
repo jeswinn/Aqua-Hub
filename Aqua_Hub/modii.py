@@ -1,46 +1,69 @@
-import tensorflow as tf
-import numpy as np
-import cv2
-import os
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torchvision
+import torchvision.transforms as transforms
+from torchvision.datasets import ImageFolder
+from torch.utils.data import DataLoader
+import torchvision.models as models
 
-# Load the trained model
-model = tf.keras.models.load_model("fish_disease_mode.keras")  # Ensure correct path
+# Device configuration
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Define image size (same as used in training)
-img_size = (224, 224)
+# Data transformations
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
 
-# Class labels (Update these to match your dataset)
-class_labels = ["Healthy", "Disease1", "Disease2", "Disease3","disease4","disease5"]  # Modify as per your classes
+# Load dataset
+train_dataset = ImageFolder(root="dataset/Train", transform=transform)
+val_dataset = ImageFolder(root="dataset/Test", transform=transform)
 
-def preprocess_image(image_path):
-    """Loads and preprocesses an image for prediction."""
-    img = cv2.imread(image_path)  # Read the image
-    if img is None:
-        print(f"Error: Could not read {image_path}")
-        return None
-    img = cv2.resize(img, img_size)  # Resize to model input size
-    img = img / 255.0  # Normalize pixel values
-    img = np.expand_dims(img, axis=0)  # Add batch dimension
-    return img
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-def predict_fish_disease(image_path):
-    """Predicts the disease in a fish image."""
-    processed_img = preprocess_image(image_path)
-    if processed_img is None:
-        return  # Stop if image loading failed
-    
-    predictions = model.predict(processed_img)
-    predicted_class = np.argmax(predictions)  # Get class index with highest probability
-    confidence = np.max(predictions)  # Get confidence score
+# Load ResNet-50 model
+model = models.resnet50(pretrained=True)
+num_classes = 7  # Number of fish disease classes
+model.fc = nn.Linear(model.fc.in_features, num_classes)
+model = model.to(device)
 
-    print(f"Predicted Class: {class_labels[predicted_class]}")
-    print(f"Confidence: {confidence:.4f}")
+# Loss function and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-# Define the test image path
-test_image = r"C:\Users\jeswi\Desktop\dis.jpg"  # Replace with an actual image path
+# Training loop
+num_epochs = 10
+for epoch in range(num_epochs):
+    model.train()
+    running_loss = 0.0
+    for images, labels in train_loader:
+        images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}")
 
-# Check if the file exists before prediction
-if os.path.exists(test_image):
-    predict_fish_disease(test_image)
-else:
-    print(f"Error: {test_image} not found!")
+# Evaluate the model
+model.eval()
+correct = 0
+total = 0
+with torch.no_grad():
+    for images, labels in val_loader:
+        images, labels = images.to(device), labels.to(device)
+        outputs = model(images)
+        _, predicted = torch.max(outputs, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+accuracy = 100 * correct / total
+print(f"Validation Accuracy: {accuracy:.2f}%")
+
+# Save the trained model
+torch.save(model.state_dict(), "fish_disease_model.pth")
+print("Model saved successfully!")

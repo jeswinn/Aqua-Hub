@@ -273,3 +273,11 @@ class FishCareGuide(models.Model):
 
 
 
+class FishDiseaseResult(models.Model):
+    image = models.ImageField(upload_to="disease_images/")
+    detected_disease = models.CharField(max_length=255)
+    confidence = models.FloatField()
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.detected_disease} ({self.confidence}%)"

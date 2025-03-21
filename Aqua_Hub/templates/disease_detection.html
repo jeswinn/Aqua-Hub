@@ -1,0 +1,211 @@
+{% extends 'newindex.html' %}
+{% block body %}
+<div class="dashboard-content">
+    <h2 class="mb-4 text-center text-success">Fish Disease Detection</h2>
+    
+    <div class="card shadow-lg border-0">
+        <div class="card-body">
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <i class="fas fa-info-circle me-2"></i> 
+                <span>Please upload a clear image of a fish. Images of other animals or objects will not be accepted.</span>
+            </div>
+            
+            <div class="upload-section text-center">
+                <form id="diseaseDetectionForm" enctype="multipart/form-data" class="p-3">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="imageInput" class="form-label fw-bold">Upload Fish Image</label>
+                        <input type="file" class="form-control border-success" id="imageInput" name="file" accept="image/*" required>
+                        <small class="text-muted">Supported formats: JPG, PNG, JPEG</small>
+                    </div>
+                    <div class="mb-4">
+                        <img id="imagePreview" src="" alt="Image Preview" class="img-fluid rounded shadow-sm" style="max-width: 300px; display: none;">
+                    </div>
+                    <button type="submit" class="btn btn-success" id="detectButton">
+                        <i class="fas fa-microscope"></i> Detect Disease
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultSection" class="mt-4" style="display: none;">
+                <h5 class="text-center text-primary mb-4">Detection Results</h5>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Detected Disease:</h6>
+                                <p id="detectedDisease" class="text-danger fw-bold"></p>
+                                <h6>Confidence:</h6>
+                                <p id="confidence" class="text-success fw-bold"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>All Probabilities:</h6>
+                                <div id="probabilities" class="small"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if metrics %}
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Model Performance Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Statistical Accuracy Metrics:</h6>
+                    <ul class="list-group mb-3">
+                        {% for key, value in metrics.statistical_metrics.items %}
+                            <li class="list-group-item">{{ key }}: <span class="fw-bold">{{ value }}</span></li>
+                        {% endfor %}
+                    </ul>
+
+                    <h6>Overall Model Accuracy: <span class="text-success fw-bold">{{ metrics.overall_accuracy }}</span></h6>
+
+                    <h6 class="mt-3">Disease Detection Matrix:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Disease Class</th>
+                                    <th>Accuracy</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for disease, values in metrics.disease_metrics.items %}
+                                <tr>
+                                    <td>{{ disease }}</td>
+                                    <td>{{ values.0|floatformat:2 }}</td>
+                                    <td>{{ values.1|floatformat:2 }}</td>
+                                    <td>{{ values.2|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    const file = e.target.files[0];
+
+    // Reset previous results
+    document.getElementById('resultSection').style.display = 'none';
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid File',
+            text: 'Please upload an image file (JPG, PNG, or JPEG).'
+        });
+        e.target.value = '';
+        preview.style.display = 'none';
+        return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+            icon: 'error',
+            title: 'File Too Large',
+            text: 'Please upload an image smaller than 5MB.'
+        });
+        e.target.value = '';
+        preview.style.display = 'none';
+        return;
+    }
+
+    if (file) {
+        preview.style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+document.getElementById('diseaseDetectionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    const imageFile = document.getElementById('imageInput').files[0];
+
+    if (!imageFile) {
+        Swal.fire({
+            icon: 'error',
+            title: 'No Image',
+            text: 'Please select an image to upload.'
+        });
+        return;
+    }
+
+    formData.append('file', imageFile);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    // Show loading state
+    const submitButton = document.getElementById('detectButton');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    submitButton.disabled = true;
+
+    // Reset previous results
+    document.getElementById('resultSection').style.display = 'none';
+
+    fetch("{% url 'predict_disease' %}", {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'error') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Image',
+                text: data.error,
+                confirmButtonText: 'Upload New Image'
+            });
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            return;
+        }
+        
+        document.getElementById('resultSection').style.display = 'block';
+        document.getElementById('detectedDisease').textContent = data.disease;
+        document.getElementById('confidence').textContent = data.confidence;
+
+        const probabilitiesDiv = document.getElementById('probabilities');
+        probabilitiesDiv.innerHTML = '';
+        Object.entries(data.all_probabilities || {}).forEach(([disease, prob]) => {
+            const div = document.createElement('div');
+            div.className = 'mb-1';
+            div.innerHTML = `${disease}: <span class="text-muted">${prob}</span>`;
+            probabilitiesDiv.appendChild(div);
+        });
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error processing image. Please try again.'
+        });
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+    });
+});
+</script>
+{% endblock %}
